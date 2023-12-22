@@ -1,8 +1,36 @@
+import "websocket-polyfill";
+
 import fastify from 'fastify'
 import websocket from '@fastify/websocket'
 import WebSocket from 'ws';
+import NDK, { NDKEvent, NDKPrivateKeySigner } from "@nostr-dev-kit/ndk";
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 let lastPrice = 0;
+let keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV);
+
+const ndk = new NDK({
+    explicitRelayUrls: [
+        "wss://nostr.dbtc.link",
+        "wss://pablof7z.nostr1.com",
+        "wss://offchain.pub",
+        "wss://relay.f7z.io",
+        "wss://relay.damus.io",
+        "wss://relay.snort.social",
+        "wss://offchain.pub/",
+        "wss://nostr.mom",
+        "wss://nostr-pub.wellorder.net",
+        "wss://purplepag.es",
+        "wss://brb.io/",
+    ],
+    signer: keySigner,
+});
+
+await ndk.connect(6000);
+
+const eventsPerRelay = new Map<string, number>();
+const eventIds = new Set();
 
 let createExternalWebSocket = () => {
     const ws = new WebSocket("wss://ws.coincap.io/prices?assets=bitcoin");
@@ -11,7 +39,7 @@ let createExternalWebSocket = () => {
         console.log('Connected to CoinCap.io');
     });
 
-    ws.on('message', (message) => {
+    ws.on('message', async(message) => {
         const messageString = message.toString();
         const jsonMsg = JSON.parse(messageString);
 
@@ -26,10 +54,29 @@ let createExternalWebSocket = () => {
         let output = { "bitcoin": lastPrice }
 
         console.log(output);
-        console.log(`Connected clients: ${clients.size}`)
+//        console.log(`Connected clients: ${clients.size}`)
         for (const client of clients) {
             client.send(JSON.stringify(output));
         }
+
+        let currentDate = Date.now();
+        let expire = new Date(currentDate);
+        expire.setMinutes(expire.getMinutes() + 1);
+        const ndkEvent = new NDKEvent(ndk);
+        ndkEvent.kind = 1;
+        ndkEvent.content = lastPrice.toString();
+        ndkEvent.tags = [
+            ["expiration", String(Math.floor(expire.getTime() / 1000))],
+            ["type", "priceUsd"],
+            ["source", "coinCapWS"],
+          ];
+
+        await ndkEvent.publish().then(e => {
+            console.log("Published");
+        }).catch(e => {
+            console.error("Error");
+        })
+
     });
 
     ws.on('close', (code, reason) => {

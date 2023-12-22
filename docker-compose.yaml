@@ -1,0 +1,8 @@
+name: btclockws
+services:
+  main:
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    image: node
+    command: node --loader ts-node/esm index.ts
