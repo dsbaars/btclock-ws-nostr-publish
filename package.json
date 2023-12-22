@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fastify/websocket": "^8.3.0",
+    "@mempool/mempool.js": "^2.3.0",
     "@nostr-dev-kit/ndk": "^2.3.1",
     "dotenv": "^16.3.1",
     "esrun": "^3.2.26",
