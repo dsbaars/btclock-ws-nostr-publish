@@ -67,7 +67,7 @@ subscription.on('event', async (e) => {
     }
 })
 
-let lastPublish:number;
+let lastPublish: number;
 
 let createPriceWebSocket = () => {
     const ws = new WebSocket("wss://ws.coincap.io/prices?assets=bitcoin");
@@ -158,7 +158,7 @@ const initMempool = async () => {
                 ["source", "mempoolWS"]
             ];
             ndkEvent.content = String(res.block.height);
-            let output = { "block": {"height": res.block.height } };
+            let output = { "block": { "height": res.block.height } };
 
             console.log(output);
             for (const client of clients) {
@@ -190,8 +190,8 @@ await server.register(websocket);
 server.get('/', { websocket: true }, (connection, req) => {
     clients.add(connection.socket);
 
-    connection.socket.send(JSON.stringify({ "bitcoin": lastPrice }))
-    connection.socket.send(JSON.stringify({ "block": lastBlock }))
+    connection.socket.send(JSON.stringify({ "bitcoin": lastPrice }));
+    connection.socket.send(JSON.stringify({ "block": { "height": lastBlock } }));
 
     connection.socket.on('close', (code, reason) => {
         //console.log(`Connection closed with code ${code} and reason: ${reason}`);
