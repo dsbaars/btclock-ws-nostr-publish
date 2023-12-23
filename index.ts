@@ -158,7 +158,7 @@ const initMempool = async () => {
                 ["source", "mempoolWS"]
             ];
             ndkEvent.content = String(res.block.height);
-            let output = { "block": res.block.height }
+            let output = { "block": {"height": res.block.height } };
 
             console.log(output);
             for (const client of clients) {
