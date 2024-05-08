@@ -1,5 +1,5 @@
 config:
-  target: "ws://127.0.0.1:8080/"
+  target: "wss://ws.btclock.store/"
   phases:
     - duration: 20  # Test for 20 seconds
       arrivalRate: 10 # Every second, add 10 users

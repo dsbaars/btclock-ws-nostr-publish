@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<!-- and it's easy to individually load additional languages -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+
+<title>WebSocket Data Viewer</title>
+<style>
+    * {
+        font-family: 'Ubuntu', sans-serif;
+    }
+
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: 'Ubuntu Mono', sans-serif;
+
+    }
+</style>
+</head>
+<body>
+<h1>BTClock WebSocket Data Server</h1>
+<div id="data-container"></div>
+
+<script>
+    // Function to create WebSocket connection
+    function connectWebSocket() {
+        const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const websocketUrl = websocketProtocol + '//' + window.location.host + '/ws';
+        const socket = new WebSocket(websocketUrl);
+
+        let lastMessages = [];
+
+        // Event handler for WebSocket open
+        socket.onopen = function(event) {
+            console.log('WebSocket connection established');
+        };
+
+        // Event handler for receiving messages
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            storeAndDisplayData(data);
+        };
+
+        // Event handler for WebSocket close
+        socket.onclose = function(event) {
+            console.log('WebSocket connection closed');
+        };
+
+        // Event handler for WebSocket errors
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        function storeAndDisplayData(data) {
+            const timestamp = new Date().toLocaleString();
+            const message = { timestamp, data: JSON.stringify(data) };
+            lastMessages.unshift(message); // Add message to the beginning of the array
+
+            if (lastMessages.length > 10) {
+                lastMessages.pop(); // Remove oldest message if more than 10 messages
+            }
+
+            displayData(lastMessages);
+        }
+    }
+
+    // Function to display data in prettified JSON format
+    function displayData(messages) {
+        const dataContainer = document.getElementById('data-container');
+        let html = '';
+        messages.forEach(message => {
+            html += `<div><strong>${message.timestamp}</strong><pre>${hljs.highlight(message.data, { language: 'json' }).value}</pre></div>`;
+        });
+
+
+        dataContainer.innerHTML = html;
+    }
+
+    // Connect to WebSocket when the page loads
+    window.onload = function() {
+        connectWebSocket();
+    };
+</script>
+</body>
+</html>

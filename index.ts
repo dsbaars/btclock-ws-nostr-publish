@@ -5,21 +5,32 @@ import websocket from '@fastify/websocket'
 import WebSocket from 'ws';
 import NDK, { NDKEvent, NDKFilter, NDKPrivateKeySigner } from "@nostr-dev-kit/ndk";
 import mempoolJS from "@mempool/mempool.js";
+import * as path from 'path';
+import * as fs from 'fs';
+import * as url from 'url';
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const { bitcoin: { blocks } } = mempoolJS({
+const { bitcoin: { blocks, fees } } = mempoolJS({
     hostname: 'mempool.space'
 });
 
 let lastPrice = 0;
 let lastBlock = await blocks.getBlocksTipHeight();
+let lastMedianFee = (await fees.getFeesMempoolBlocks())[0].medianFee;
+console.log(lastMedianFee);
+
 let keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV);
+
+let publishToNostr = false;
 
 const ndk = new NDK({
     explicitRelayUrls: [
         "wss://nostr.dbtc.link",
+        "wss://nostr1.daedaluslabs.io",
+        "wss://nostr2.daedaluslabs.io",
+        "wss://nostr3.daedaluslabs.io",
         "wss://pablof7z.nostr1.com",
         "wss://offchain.pub",
         "wss://relay.f7z.io",
@@ -56,7 +67,11 @@ subscription.on('event', async (e) => {
 
             //console.log(`Trying to delete ${lastEventId}`);
             lastEventId = "";
-            await ndkEvent.publish();
+            if (publishToNostr) {
+                await ndkEvent.publish();
+            } else {
+                console.log("Nostr publishing disabled, not publishing price update");
+            }
         }
 
         lastEventId = e.id;
@@ -110,11 +125,15 @@ let createPriceWebSocket = () => {
             ["source", "coinCapWS"],
         ];
 
-        await ndkEvent.publish().then(e => {
-            lastPublish = Date.now() / 1000;
-        }).catch(e => {
-            console.error("Error publishing price");
-        })
+        if (publishToNostr) {
+            await ndkEvent.publish().then(e => {
+                lastPublish = Date.now() / 1000;
+            }).catch(e => {
+                console.error("Error publishing price");
+            })
+        } else {
+            console.log("Nostr publishing disabled, not publishing price update");
+        }
 
     });
 
@@ -137,7 +156,7 @@ const initMempool = async () => {
     });
 
     const ws = websocket.initServer({
-        options: ["blocks"],
+        options: ["blocks", "mempool-blocks"],
     });
 
     ws.on("message", async (data) => {
@@ -165,13 +184,59 @@ const initMempool = async () => {
                 client.send(JSON.stringify(output));
             }
 
-            await ndkEvent.publish().then(e => {
-            }).catch(e => {
-                console.error("Error publishing block");
-            })
+            if (publishToNostr) {
+
+                await ndkEvent.publish().then(e => {
+                }).catch(e => {
+                    console.error("Error publishing block");
+                })
+            }
+            else {
+                console.log("Nostr publishing disabled, not publishing block update", ndkEvent.rawEvent);
+            }
 
             lastBlock = res.block.height;
+        } else if (res["mempool-blocks"]) {
+            let currentDate = Date.now();
+            let expire = new Date(currentDate);
+
+            if (Math.round(res["mempool-blocks"][0].medianFee) == lastMedianFee)
+                return;
+
+            // expire.setMinutes(expire.getMinutes() + 240);
+
+            // const ndkEvent = new NDKEvent(ndk);
+
+            // ndkEvent.kind = 1;
+            // ndkEvent.created_at = Math.floor(currentDate / 1000);
+            // ndkEvent.tags = [
+            //     ["expiration", String(Math.floor(expire.getTime() / 1000))],
+            //     ["type", "blockMedianFee"],
+            //     ["source", "mempoolWS"]
+            // ];
+            // ndkEvent.content = String(res.block.height);
+            let output = { "mempool-blocks": [{ "medianFee": Math.round(res["mempool-blocks"][0].medianFee) }] };
+
+            // console.log(output);
+            for (const client of clients) {
+                client.send(JSON.stringify(output));
+            }
+
+            if (publishToNostr) {
+
+                // await ndkEvent.publish().then(e => {
+                // }).catch(e => {
+                //     console.error("Error publishing fee-update");
+                // })
+            }
+            else {
+                console.log("Nostr publishing disabled, not publishing fee update");
+            }
+
+            lastMedianFee = Math.round(res["mempool-blocks"][0].medianFee);
+
         }
+
     });
 
     ws.on('close', (code, reason) => {
@@ -187,11 +252,19 @@ const clients: Set<WebSocket> = new Set();
 
 await server.register(websocket);
 
-server.get('/', { websocket: true }, (connection, req) => {
+server.get('/', async (request, reply) => {
+    const htmlFilePath = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '/public/index.html');
+    const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
+    reply.type('text/html').send(htmlContent);
+});
+
+
+server.get('/ws', { websocket: true }, (connection, req) => {
     clients.add(connection.socket);
 
     connection.socket.send(JSON.stringify({ "bitcoin": lastPrice }));
     connection.socket.send(JSON.stringify({ "block": { "height": lastBlock } }));
+    connection.socket.send(JSON.stringify({ "mempool-blocks": [{ "medianFee": lastMedianFee }]}));
 
     connection.socket.on('close', (code, reason) => {
         //console.log(`Connection closed with code ${code} and reason: ${reason}`);
