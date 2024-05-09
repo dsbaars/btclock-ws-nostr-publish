@@ -120,17 +120,27 @@ function connectWebSocket() {
             });
         } else if (data['bitcoin']) {
             let currentPrice = Module.parsePriceData(data.bitcoin, '$', false);
+            let currentPrice2 = Module.parsePriceData(data.bitcoin, '$', true);
+
             let satsPerCurrency = Module.parseSatsPerCurrency(data.bitcoin, '$', false);
             let marketCap = Module.parseMarketCap(currentBlockHeight, data.bitcoin, '$', false);
             let marketCap2 = Module.parseMarketCap(currentBlockHeight, data.bitcoin, '$', true);
 
             let priceContainer = document.getElementById('currentPrice');
+            let priceContainer2 = document.getElementById('currentPrice2');
 
             priceContainer.innerHTML = '';
             currentPrice.forEach((v) => {
                 populateContainer(v, priceContainer);
 
             });
+
+            priceContainer2.innerHTML = '';
+            currentPrice2.forEach((v) => {
+                populateContainer(v, priceContainer2);
+
+            });
+
 
             let moscowContainer = document.getElementById('moscowTime');
 
