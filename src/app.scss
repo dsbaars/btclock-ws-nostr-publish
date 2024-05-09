@@ -22,6 +22,8 @@
 
 @import "@fontsource/antonio/latin-400";
 @import "@fontsource/ubuntu/latin-400";
+@import "@fontsource/ubuntu/latin-700";
+
 @import "@fontsource/oswald/latin-400";
 @import "@xterm/xterm/css/xterm.css";
 
@@ -125,11 +127,12 @@ pre {
     align-items: stretch;
     align-content: stretch;
     max-height: 30rem;
-    max-width: 100%;
+    // max-width: 100%;
     margin: 0 auto;
 }
 
 #terminalContainer {
     width: 70vw;
     margin: 0 auto;
+    overflow: hidden;
 }
