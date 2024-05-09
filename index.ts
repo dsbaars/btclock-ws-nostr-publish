@@ -3,6 +3,8 @@ import "websocket-polyfill";
 import fastify from 'fastify'
 import websocket from '@fastify/websocket'
 import fastifyStatic from "@fastify/static";
+import FastifyVite from '@fastify/vite'
+
 import WebSocket from 'ws';
 import NDK, { NDKEvent, NDKFilter, NDKPrivateKeySigner } from "@nostr-dev-kit/ndk";
 import mempoolJS from "@mempool/mempool.js";
@@ -262,6 +264,11 @@ initMempool();
 const server = fastify()
 const clients: Set<WebSocket> = new Set();
 
+// await server.register(FastifyVite, {
+//     root: import.meta.url,
+//     dev: process.argv.includes('--dev'),
+//   })
+
 await server.register(websocket);
 server.register(fastifyStatic, {
     root: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'public')
@@ -285,6 +292,7 @@ server.get('/ws', { websocket: true }, (connection, req) => {
         clients.delete(connection.socket);
     });
 })
+// await server.vite.ready()
 
 server.listen({ host: "::", port: 8080 }, (err, address) => {
     if (err) {
