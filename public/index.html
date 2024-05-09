@@ -1,91 +1,373 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
-<!-- and it's easy to individually load additional languages -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.3/tsparticles.confetti.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.5.0/xterm.js" integrity="sha512-Gujw5GajF5is3nMoGv9X+tCMqePLL/60qvAv1LofUZTV9jK8ENbM9L+maGmOsNzuZaiuyc/fpph1KT9uR5w3CQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.5.0/xterm.css" integrity="sha512-AbNrj/oSHJaILgcdnkYm+DQ08SqVbZ8jlkJbFyyS1WDcAaXAcAfxJnCH69el7oVgTwVwyA5u5T+RdFyUykrV3Q==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&family=Oswald:wght@200..700&display=swap');
 
-<title>WebSocket Data Viewer</title>
-<style>
-    * {
-        font-family: 'Ubuntu', sans-serif;
-    }
-
-    pre {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: 'Ubuntu Mono', sans-serif;
-
-    }
-</style>
-</head>
-<body>
-<h1>BTClock WebSocket Data Server</h1>
-<div id="data-container"></div>
-
-<script>
-    // Function to create WebSocket connection
-    function connectWebSocket() {
-        const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const websocketUrl = websocketProtocol + '//' + window.location.host + '/ws';
-        const socket = new WebSocket(websocketUrl);
-
-        let lastMessages = [];
-
-        // Event handler for WebSocket open
-        socket.onopen = function(event) {
-            console.log('WebSocket connection established');
-        };
-
-        // Event handler for receiving messages
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            storeAndDisplayData(data);
-        };
-
-        // Event handler for WebSocket close
-        socket.onclose = function(event) {
-            console.log('WebSocket connection closed');
-        };
-
-        // Event handler for WebSocket errors
-        socket.onerror = function(error) {
-            console.error('WebSocket error:', error);
-        };
-
-        function storeAndDisplayData(data) {
-            const timestamp = new Date().toLocaleString();
-            const message = { timestamp, data: JSON.stringify(data) };
-            lastMessages.unshift(message); // Add message to the beginning of the array
-
-            if (lastMessages.length > 10) {
-                lastMessages.pop(); // Remove oldest message if more than 10 messages
-            }
-
-            displayData(lastMessages);
+        *:not(#terminal *):not(.btclock *) {
+            font-family: 'Ubuntu', sans-serif;
         }
-    }
 
-    // Function to display data in prettified JSON format
-    function displayData(messages) {
-        const dataContainer = document.getElementById('data-container');
-        let html = '';
-        messages.forEach(message => {
-            html += `<div><strong>${message.timestamp}</strong><pre>${hljs.highlight(message.data, { language: 'json' }).value}</pre></div>`;
-        });
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Ubuntu Mono', sans-serif;
+
+        }
+
+        .btclock {
+            border: 1px solid darkgray;
+            background: #000;
+            border-radius: 5px;
+            padding: 10px;
+            max-width: 700px;
+            margin: 10px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            align-items: center;
+            align-content: stretch;
+            font-family: 'Antonio', sans-serif !important;
+        }
+
+        .btclock * {
+            font-family: "Oswald", sans-serif;
+        }
+
+        /* .btclock span {
+            font-family: 'Antonio', sans-serif;
+            font-weight: 400;
+            font-size: 1.8rem;
+            border: 2px solid gold;
+            border-radius: 8px;
+            text-align: center;
+            padding: 10px;
+            margin: 0 5px 0 0;
+            display: inline-block;
+            text-transform: uppercase;
+            background: #000;
+            color: #fff;
+        } */
+
+        .btclock>div {
+            padding: 5px;
+        }
+
+        .digit,
+        .splitText,
+        .mediumText {
+            border: 2px solid gold;
+            border-radius: 8px;
+            min-width: 50px;
+            margin: 5px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .digit {
+            font-size: 4rem;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .splitText div:first-child::after {
+            display: block;
+            content: '';
+            margin-top: 0px;
+            border-bottom: 2px solid;
+            margin-bottom: 3px;
+        }
 
 
-        dataContainer.innerHTML = html;
-    }
+        .mediumText {
+            font-size: 2rem;
+            padding-left: 5px;
+            padding-right: 5px;
+            padding-top: 29px !important;
+            padding-bottom: 29px !important;
+        }
 
-    // Connect to WebSocket when the page loads
-    window.onload = function() {
-        connectWebSocket();
+        .splitText {
+            font-size: 1.2rem;
+            padding-top: 19px !important;
+            padding-bottom: 20px !important;
+
+            text-align: center;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: stretch;
+            align-content: stretch;
+            max-height: 30rem;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        #terminalContainer {
+            width: 70vw;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<script>
+    var Module = {
+        onRuntimeInitialized: function () {
+            console.log('runtime initalized');
+            //        console.log('lerp result: ' + Module.ccall('parseBlockHeight', 'number', ['number'], [12345]));
+            //     console.log(Module.vectorToStringArray(Module.parseBlockHeight(12345)));
+            // let blockHeight = Module.parseBlockHeight(12345);
+            // let container = document.getElementById('blockHeight');
+
+            // container.innerHTML = '';
+            // blockHeight.forEach((v) => {
+            //     let el = document.createElement('span');
+            //     el.innerHTML = v;
+            //     container.append(el);
+            // });
+            console.log(Module.parsePriceData(61414, "$", true));
+            console.log(Module.parsePriceData(61414, "$", false));
+
+        }
     };
 </script>
+<script src="js/btclock_datahandler.js"></script>
+
+<body>
+    <h1>BTClock WebSocket Data Server</h1>
+    <div class="preview-container">
+        <div class="btclock" id="blockHeight">
+        </div>
+        <div class="btclock" id="feeRate">
+        </div>
+        <div class="btclock" id="halvingCountdown">
+        </div>
+        <div class="btclock" id="halvingCountdown2">
+        </div>
+        <div class="btclock" id="marketCap">
+        </div>
+        <div class="btclock" id="marketCap2">
+        </div>
+        <div class="btclock" id="currentPrice">
+        </div>
+        <div class="btclock" id="moscowTime">
+        </div>
+    </div>
+    <div id="terminalContainer">
+        <div id="terminal"></div>
+    </div>
+    <script>
+        tsParticles.load({
+            id: "tsparticles"
+        });
+
+        const isSplitText = (str) => {
+            return str.includes('/');
+        };
+
+        // Function to create WebSocket connection
+        function connectWebSocket() {
+            const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const websocketUrl = websocketProtocol + '//' + window.location.host + '/ws?prices=bitcoin&currency=usd';
+            const socket = new WebSocket(websocketUrl);
+
+            let lastMessages = [];
+            let currentBlockHeight = 840000;
+            // Event handler for WebSocket open
+            socket.onopen = function (event) {
+                console.log('WebSocket connection established');
+            };
+
+            // Event handler for receiving messages
+            socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                storeAndDisplayData(data);
+            };
+
+            // Event handler for WebSocket close
+            socket.onclose = function (event) {
+                console.log('WebSocket connection closed');
+            };
+
+            // Event handler for WebSocket errors
+            socket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
+
+            function populateContainer(v, container) {
+                let el = document.createElement('div');
+                if (isSplitText(v)) {
+                    el.classList.add('splitText');
+
+                    v.split('/').forEach((part) => {
+                        let div = el.appendChild(document.createElement('div'));
+                        div.classList.add('flex-items');
+                        div.innerHTML = part;
+                    })
+
+                } else if (v === " ") {
+                    el.classList.add('digit');
+                    el.innerHTML = "&nbsp;"
+                } else if (v.length >= 3) {
+                    el.classList.add('mediumText');
+                    el.innerHTML = v;
+                } else {
+                    el.classList.add('digit');
+                    el.innerHTML = v;
+                }
+                container.append(el);
+            }
+            
+            var term = new Terminal({
+                disableStdin: true,
+                scrollback: 10,
+                rows: 10,
+                cols: 200,
+            });
+            term.open(document.getElementById('terminal'));
+
+            function storeAndDisplayData(data) {
+
+                if (data["block"]) {
+
+                    if (currentBlockHeight != 840000 && currentBlockHeight != data.block.height) {
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { x: 1, y: 1 },
+                        });
+
+                        Toastify({
+                            text: `Block ${data.block.height} has been found!`,
+                            duration: 3000,
+                            gravity: 'bottom',
+                        }).showToast();
+                    }
+
+                    currentBlockHeight = data.block.height;
+
+
+                    let blockHeight = Module.parseBlockHeight(data.block.height);
+                    let halvingCountdown = Module.parseHalvingCountdown(data.block.height, true);
+
+
+                    let container = document.getElementById('blockHeight');
+
+                    container.innerHTML = '';
+                    blockHeight.forEach((v) => {
+                        populateContainer(v, container);
+                    });
+
+                    let halvingCountdownContainer = document.getElementById('halvingCountdown');
+
+                    halvingCountdownContainer.innerHTML = '';
+                    halvingCountdown.forEach((v) => {
+                        populateContainer(v, halvingCountdownContainer);
+                    });
+                    let halvingCountdown2 = Module.parseHalvingCountdown(data.block.height, false);
+
+                    let halvingCountdown2Container = document.getElementById('halvingCountdown2');
+
+                    halvingCountdown2Container.innerHTML = '';
+                    halvingCountdown2.forEach((v) => {
+                        populateContainer(v, halvingCountdown2Container);
+                    });
+                } else if (data['bitcoin']) {
+                    let currentPrice = Module.parsePriceData(data.bitcoin, '$', false);
+                    let satsPerCurrency = Module.parseSatsPerCurrency(data.bitcoin, '$', false);
+                    let marketCap = Module.parseMarketCap(currentBlockHeight, data.bitcoin, '$', false);
+                    let marketCap2 = Module.parseMarketCap(currentBlockHeight, data.bitcoin, '$', true);
+
+                    let priceContainer = document.getElementById('currentPrice');
+
+                    priceContainer.innerHTML = '';
+                    currentPrice.forEach((v) => {
+                        populateContainer(v, priceContainer);
+
+                    });
+
+                    let moscowContainer = document.getElementById('moscowTime');
+
+                    moscowContainer.innerHTML = '';
+                    satsPerCurrency.forEach((v) => {
+                        populateContainer(v, moscowContainer);
+
+                    });
+
+                    let mcapContainer = document.getElementById('marketCap');
+
+                    mcapContainer.innerHTML = '';
+                    marketCap.forEach((v) => {
+                        populateContainer(v, mcapContainer);
+
+                    });
+
+                    let mcapContainer2 = document.getElementById('marketCap2');
+
+                    mcapContainer2.innerHTML = '';
+                    marketCap2.forEach((v) => {
+                        populateContainer(v, mcapContainer2);
+
+                    });
+                } else if (data["mempool-blocks"]) {
+                    let feeRate = Module.parseBlockFees(data["mempool-blocks"][0].medianFee);
+                    let container = document.getElementById('feeRate');
+
+                    container.innerHTML = '';
+                    feeRate.forEach((v) => {
+                        populateContainer(v, container);
+
+                    });
+                }
+
+                const timestamp = new Date().toLocaleString();
+                const message = { timestamp, data: JSON.stringify(data) };
+                lastMessages.unshift(message); // Add message to the beginning of the array
+
+                if (lastMessages.length > 10) {
+                    lastMessages.pop(); // Remove oldest message if more than 10 messages
+                }
+
+                term.writeln(`\x1b[32m${timestamp}\x1b[0m ${message.data}`);
+
+               // displayData(lastMessages);
+            }
+        }
+
+        // Function to display data in prettified JSON format
+        function displayData(messages) {
+            const dataContainer = document.getElementById('data-container');
+            let html = '';
+            messages.forEach(message => {
+                html += `<div><strong>${message.timestamp}</strong><pre>${hljs.highlight(message.data, { language: 'json' }).value}</pre></div>`;
+            });
+
+
+            dataContainer.innerHTML = html;
+        }
+
+        // Connect to WebSocket when the page loads
+        window.onload = function () {
+            connectWebSocket();
+        };
+    </script>
 </body>
+
 </html>

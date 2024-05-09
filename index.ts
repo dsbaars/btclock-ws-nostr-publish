@@ -2,6 +2,7 @@ import "websocket-polyfill";
 
 import fastify from 'fastify'
 import websocket from '@fastify/websocket'
+import fastifyStatic from "@fastify/static";
 import WebSocket from 'ws';
 import NDK, { NDKEvent, NDKFilter, NDKPrivateKeySigner } from "@nostr-dev-kit/ndk";
 import mempoolJS from "@mempool/mempool.js";
@@ -262,7 +263,10 @@ const server = fastify()
 const clients: Set<WebSocket> = new Set();
 
 await server.register(websocket);
-
+server.register(fastifyStatic, {
+    root: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'public')
+  })
+  
 server.get('/', async (request, reply) => {
     const htmlFilePath = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '/public/index.html');
     const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
