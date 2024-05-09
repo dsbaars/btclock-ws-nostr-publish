@@ -4,6 +4,56 @@ import { confetti } from "@tsparticles/confetti";
 import { Terminal } from '@xterm/xterm';
 import './app.scss';
 import "toastify-js/src/toastify.css"
+import { Relay } from 'nostr-tools/relay'
+import { SimplePool, nip19 } from "nostr-tools";
+import { WsConnection } from "./ws_connection";
+
+// const relay = await Relay.connect('wss://nostr1.daedaluslabs.io')
+// console.log(`connected to ${relay.url}`)
+
+const pool = new SimplePool()
+
+let relays = ['wss://nostr1.daedaluslabs.io', 'wss://nostr2.daedaluslabs.io', 'wss://nostr3.daedaluslabs.io', 'wss://nostr.dbtc.link'];
+
+
+var nostrTerm = new Terminal({
+    disableStdin: true,
+    scrollback: 10,
+    rows: 10,
+    cols: 200,
+});
+nostrTerm.open(document.getElementById('nostrTerminal'));
+
+const sub = pool.subscribeMany(relays, [
+    {
+        kinds: [1],
+        authors: [process.env.NOSTR_PUB],
+    },
+  ], {
+    onevent(event) {
+      const msgType = event.tags.find((v) => { return v[0] === 'type'; })[1];
+
+      //console.log('we got the event we wanted:', event)
+      if (msgType === "priceUsd" && new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
+        return;
+      } else if (new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
+        return;
+      }
+
+      nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleString()}\x1b[0m { type: ${msgType}, content: ${event.content}}`);
+
+    },
+    oneose() {
+        console.log('EOSE');
+     // sub.close()
+    }
+  })
+
+
+let npub = nip19.npubEncode(process.env.NOSTR_PUB)
+nostrTerm.writeln(` < Listening to \x1b[33m${npub}\x1b[0m`);
+
+console.log(npub);
 
 tsParticles.load({
     id: "tsparticles"
@@ -13,34 +63,69 @@ const isSplitText = (str) => {
     return str.includes('/');
 };
 
+
+
+Array.from(document.getElementsByClassName('btclock')).forEach(element => {
+
+    for (let char of [..."LOADING"]) {
+        let l = document.createElement('div');
+        l.classList.add('digit');
+        l.innerHTML = char;
+        element.append(l);
+    }
+});
+
 // Function to create WebSocket connection
 function connectWebSocket() {
     const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const websocketUrl = websocketProtocol + '//' + window.location.host + '/ws?prices=bitcoin&currency=usd';
-    const socket = new WebSocket(websocketUrl);
+    const socket = new WsConnection(websocketUrl);
 
     let lastMessages = [];
     let currentBlockHeight = 840000;
     // Event handler for WebSocket open
-    socket.onopen = function (event) {
+  
+    let isOpen = false;
+
+    socket.on('open', (event) => {
+        isOpen = true;
+        let timestamp = new Date().toLocaleString();
+        term.writeln(`\x1b[32m${timestamp}\x1b[36m WebSocket connection established`);
+
         console.log('WebSocket connection established');
-    };
+        document.getElementById('websocketConnection')?.classList.add('online');
+    })
 
-    // Event handler for receiving messages
-    socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
+    socket.on('message', (eventData) => {
+        const data = JSON.parse(eventData);
         storeAndDisplayData(data);
-    };
+    })
 
-    // Event handler for WebSocket close
-    socket.onclose = function (event) {
+    socket.on('close', (event) => {
+        if (isOpen) {
+            let timestamp = new Date().toLocaleString();
+            term.writeln(`\x1b[32m${timestamp}\x1b[36m WebSocket connection closed`);
+            isOpen = false;
+        }
+
         console.log('WebSocket connection closed');
-    };
+        document.getElementById('websocketConnection')?.classList.remove('online');
+    })
 
-    // Event handler for WebSocket errors
-    socket.onerror = function (error) {
-        console.error('WebSocket error:', error);
-    };
+    socket.on('error', (event) => {
+        console.error('WebSocket error:', event);
+    })
+
+    socket.open();
+
+
+//     setInterval(() => {
+// //        console.log("Readystate", socket.readyState);
+//         if (socket.readyState == socket.CLOSED) {
+//             connectWebSocket();
+//         }
+//     }, 1000);
+
 
     function populateContainer(v, container) {
         let el = document.createElement('div');

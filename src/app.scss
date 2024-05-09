@@ -27,7 +27,7 @@
 @import "@fontsource/oswald/latin-400";
 @import "@xterm/xterm/css/xterm.css";
 
-*:not(#terminal *):not(.btclock *) {
+*:not(.terminal *):not(.btclock *) {
     font-family: 'Ubuntu', sans-serif;
 }
 
@@ -131,8 +131,56 @@ pre {
     margin: 0 auto;
 }
 
-#terminalContainer {
-    width: 70vw;
-    margin: 0 auto;
+.termContainer {
+    width: 49%;
     overflow: hidden;
+    display: inline-block;
 }
+
+/* Online indicator */
+div.online-indicator {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 10px;
+    
+    background-color: red;
+    border-radius: 50%;
+    
+    position: relative;
+  }
+
+  div.online-indicator.online {
+    background-color: #0fcc45;
+
+  }
+
+span.blink {
+    display: block;
+    width: 15px;
+    height: 15px;
+    
+    background-color: red;
+    opacity: 0.7;
+    border-radius: 50%;
+    
+    animation: blink 1s linear infinite;
+  }
+
+.online  span.blink {
+    display: block;
+    width: 15px;
+    height: 15px;
+    
+    background-color: #0fcc45;
+    opacity: 0.7;
+    border-radius: 50%;
+    
+    animation: blink 1s linear infinite;
+  }
+  
+  @keyframes blink {
+    100% { transform: scale(2, 2); 
+            opacity: 0;
+          }
+  }

@@ -36,8 +36,16 @@
         <div class="btclock" id="moscowTime">
         </div>
     </div>
-    <div id="terminalContainer">
-        <div id="terminal"></div>
+    <div id="terminalContainer" class="termContainer">
+        <h3>&nbsp;<div class="online-indicator" id="websocketConnection">
+            <span class="blink"></span>
+          </div> Websocket Data</h3>
+        
+        <div id="terminal" class="terminal"></div>
+    </div>
+    <div id="nostrContainer" class="termContainer">
+        <h3>Nostr Data</h3>
+        <div id="nostrTerminal" class="terminal"></div>
     </div>
     <script type="module" src="app.ts"></script>
 </body>
