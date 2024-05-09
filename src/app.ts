@@ -1,7 +1,9 @@
 import Toastify from "toastify-js";
 import { tsParticles } from "@tsparticles/engine";
+import { confetti } from "@tsparticles/confetti";
 import { Terminal } from '@xterm/xterm';
 import './app.scss';
+import "toastify-js/src/toastify.css"
 
 tsParticles.load({
     id: "tsparticles"
@@ -63,7 +65,7 @@ function connectWebSocket() {
         }
         container.append(el);
     }
-    
+
     var term = new Terminal({
         disableStdin: true,
         scrollback: 10,
