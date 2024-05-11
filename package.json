@@ -16,7 +16,7 @@
     "@fontsource/antonio": "^5.0.20",
     "@fontsource/oswald": "^5.0.20",
     "@fontsource/ubuntu": "^5.0.13",
-    "@mempool/mempool.js": "^2.3.0",
+    "@mempool/mempool.js": "https://github.com/mempool/mempool.js",
     "@nostr-dev-kit/ndk": "^2.3.1",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
     "@tsparticles/confetti": "^3.3.0",

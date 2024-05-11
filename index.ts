@@ -29,6 +29,11 @@ const { bitcoin: { blocks, fees } } = mempoolJS({
     hostname: process.env.MEMPOOL_INSTANCE
 });
 
+// const mempoolWs = websocket.initServer({
+//     options: ["blocks", "mempool-blocks"],
+//   });
+
+
 
 
 let lastPrice = 0;
@@ -167,14 +172,17 @@ let externalWebSocket = createPriceWebSocket();
 const initMempool = async () => {
 
     const { bitcoin: { websocket } } = mempoolJS({
-        hostname: 'mempool.space'
+        hostname: process.env.MEMPOOL_INSTANCE
     });
 
-    const ws = websocket.initServer({
-        options: ["blocks", "mempool-blocks"],
-    });
+    // const ws = websocket.initServer({
+    //     options: ["blocks", "mempool-blocks"],
+    // });
 
-    ws.on("message", async (data) => {
+    const ws = websocket.wsInit();
+    websocket.wsWantData(ws, ['blocks', 'mempool-blocks'])
+
+    ws.addEventListener("message", async ({data}) => {
         const res = JSON.parse(data.toString());
 
         if (res.block) {
@@ -270,6 +278,7 @@ const clients: Set<WebSocket> = new Set();
 //   })
 
 await server.register(websocket);
+
 server.register(fastifyStatic, {
     root: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'public')
   })
