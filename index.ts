@@ -14,9 +14,11 @@ import * as fs from 'fs';
 import * as url from 'url';
 
 import * as dotenv from 'dotenv';
+import { exit } from "process";
 dotenv.config();
 
 const logger = pino({
+    level: process.env.LOGLEVEL || 'info',
     transport: {
         target: 'pino-pretty',
         options: {
@@ -34,16 +36,24 @@ const { bitcoin: { blocks, fees } } = mempoolJS({
 //   });
 
 
+let lastPrice:number, lastBlock:number, lastMedianFee:number;
 
-
-let lastPrice = 0;
-let lastBlock = await blocks.getBlocksTipHeight();
-let lastMedianFee = (await fees.getFeesMempoolBlocks())[0].medianFee;
+try {
+    lastPrice = 0;
+    lastBlock = await blocks.getBlocksTipHeight();
+    lastMedianFee = (await fees.getFeesMempoolBlocks())[0].medianFee;
+} catch (e) {
+    if (e instanceof Error)
+        logger.error(`Could not get initial mempool information: ${e.message}`);
+    else
+        logger.error(`Unknown error occured when trying to get initial mempool information`)
+    exit(1);
+}
 
 let keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV);
 
 let publishToNostr: boolean = process.env.PUBLISH_TO_NOSTR === "true" ? true : false || false;
-logger.info("Publish to nostr", publishToNostr);
+logger.info(`Publish to nostr ${publishToNostr}`);
 
 const ndk = new NDK({
     explicitRelayUrls: [
@@ -182,6 +192,9 @@ const initMempool = async () => {
     const ws = websocket.wsInit();
     websocket.wsWantData(ws, ['blocks', 'mempool-blocks'])
 
+    ws.addEventListener("open", (event) => {
+        logger.info(`Mempool Websocket to ${process.env.MEMPOOL_INSTANCE} open`);
+    });
     ws.addEventListener("message", async ({data}) => {
         const res = JSON.parse(data.toString());
 
@@ -288,6 +301,19 @@ server.get('/', async (request, reply) => {
     const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
     reply.type('text/html').send(htmlContent);
 });
+
+server.get('/api/lastblock', async (request, reply) => {
+    reply.type('application/json').send(lastBlock);
+});
+
+server.get('/api/lastprice', async (request, reply) => {
+    reply.type('application/json').send(lastPrice);
+});
+
+server.get('/api/lastfee', async (request, reply) => {
+    reply.type('application/json').send(lastMedianFee);
+});
+
 
 
 server.get('/ws', { websocket: true }, (connection, req) => {

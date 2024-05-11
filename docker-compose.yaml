@@ -1,8 +1,8 @@
 name: btclockws
 services:
-  main:
+  main1:
     volumes:
       - .:/usr/src/app
     working_dir: /usr/src/app
     image: node
-    command: node --loader ts-node/esm index.ts
+    command: yarn && yarn vite build && node --loader ts-node/esm index.ts
