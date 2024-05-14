@@ -12,6 +12,7 @@ import pino from 'pino'
 import * as path from 'path';
 import * as fs from 'fs';
 import * as url from 'url';
+import * as os from 'os';
 
 import * as dotenv from 'dotenv';
 import { exit } from "process";
@@ -305,6 +306,11 @@ server.get('/', async (request, reply) => {
 server.get('/api/lastblock', async (request, reply) => {
     reply.type('application/json').send(lastBlock);
 });
+
+server.get('/api/hostname', async (request, reply) => {
+    reply.type('application/json').send(os.hostname());
+});
+
 
 server.get('/api/lastprice', async (request, reply) => {
     reply.type('application/json').send(lastPrice);
