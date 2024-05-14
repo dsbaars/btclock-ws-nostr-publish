@@ -6,4 +6,4 @@ services:
     working_dir: /usr/src/app
     build: 
       context: docker
-    command: yarn && yarn vite build && node --loader ts-node/esm index.ts
+    command: node --loader ts-node/esm index.ts
