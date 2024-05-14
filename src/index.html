@@ -15,39 +15,8 @@
 <script src="/js/btclock_datahandler.js"></script>
 
 <body>
-    <h1>BTClock WebSocket Data Server</h1>
-    <div class="preview-container">
-        <div class="btclock" id="blockHeight">
-        </div>
-        <div class="btclock" id="feeRate">
-        </div>
-        <div class="btclock" id="halvingCountdown">
-        </div>
-        <div class="btclock" id="halvingCountdown2">
-        </div>
-        <div class="btclock" id="marketCap">
-        </div>
-        <div class="btclock" id="marketCap2">
-        </div>
-        <div class="btclock" id="currentPrice">
-        </div>
-        <div class="btclock" id="currentPrice2">
-        </div>
-        <div class="btclock" id="moscowTime">
-        </div>
-    </div>
-    <div id="terminalContainer" class="termContainer">
-        <h3>&nbsp;<div class="online-indicator" id="websocketConnection">
-            <span class="blink"></span>
-          </div> Websocket Data</h3>
-        
-        <div id="terminal" class="terminal"></div>
-    </div>
-    <div id="nostrContainer" class="termContainer">
-        <h3>Nostr Data</h3>
-        <div id="nostrTerminal" class="terminal"></div>
-    </div>
-    <script type="module" src="app.ts"></script>
+    <div id="app"></div>
+    <script type="module" src="v-app.ts"></script>
 </body>
 
 </html>

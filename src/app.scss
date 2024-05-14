@@ -1,31 +1,18 @@
-// @use "@fontsource/antonio/scss/mixins" as Antonio;
-// @use "@fontsource/ubuntu/scss/mixins" as Ubuntu;
-// @use "@fontsource/oswald/scss/mixins" as Oswald;
-
-// @include Antonio.faces(
-//   $subsets: latin,
-//   $weights: 400,
-//   $styles: normal
-// );
-
-// @include Oswald.faces(
-//   $subsets: latin,
-//   $weights: 400,
-//   $styles: normal
-// );
-
-// @include Ubuntu.faces(
-//   $subsets: latin,
-//   $weights: 400,
-//   $styles: normal
-// );
-
 @import "@fontsource/antonio/latin-400";
 @import "@fontsource/ubuntu/latin-400";
+@import "@fontsource/ubuntu-mono/latin-400";
+
 @import "@fontsource/ubuntu/latin-700";
 
 @import "@fontsource/oswald/latin-400";
 @import "@xterm/xterm/css/xterm.css";
+@import "purecss/build/forms.css";
+
+@import "purecss/build/grids-core.css";
+@import "purecss/build/grids-units.css";
+//@import "purecss/build/pure.css";
+@import "purecss/build/grids-responsive.css";
+
 
 *:not(.terminal *):not(.btclock *) {
     font-family: 'Ubuntu', sans-serif;
@@ -126,16 +113,17 @@ pre {
     justify-content: flex-start;
     align-items: stretch;
     align-content: stretch;
-    max-height: 30rem;
+    max-height: 35rem;
     // max-width: 100%;
     margin: 0 auto;
 }
 
-.termContainer {
-    width: 49%;
-    overflow: hidden;
-    display: inline-block;
-}
+// .termContainer {
+//     // width: 49%;
+//     width: 50%;
+//     // overflow: hidden;
+//     display: inline-block;
+// }
 
 /* Online indicator */
 div.online-indicator {
@@ -184,3 +172,10 @@ span.blink {
             opacity: 0;
           }
   }
+
+  h1, #dataForm {
+    padding: 0 15px;
+  }
+
+  
+  

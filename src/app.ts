@@ -59,6 +59,10 @@ tsParticles.load({
     id: "tsparticles"
 });
 
+window.formOnChange = (event) => {
+    console.log(event);
+}
+
 const isSplitText = (str) => {
     return str.includes('/');
 };

@@ -3,7 +3,9 @@ import { defineConfig } from 'vitest/config';
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
-import EnvironmentPlugin from 'vite-plugin-environment'
+import vue from '@vitejs/plugin-vue';
+import EnvironmentPlugin from 'vite-plugin-environment';
+import terser from '@rollup/plugin-terser';
 
 const path = fileURLToPath(import.meta.url)
 const root = resolve(dirname(path), 'client')
@@ -14,6 +16,7 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         plugins: [
+            vue(),
             viteStaticCopy({
                 targets: [
                     {
@@ -30,11 +33,11 @@ export default defineConfig(({ command, mode }) => {
         //     BLA: '"test"',
         // },
         build: {
-            minify: true,
+            minify: "terser",
             cssCodeSplit: false,
             rollupOptions: {
                 output: {
-                    manualChunks: false
+                    plugins: [terser()]
                 }
             },
             outDir: '../public'
