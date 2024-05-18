@@ -13,14 +13,14 @@ import "toastify-js/src/toastify.css"
 
 const wsTerminal = ref(null);
 const customColorMap = {
-  black: '\x1b[38;2;0;0;0m',
-  red: '\x1b[38;2;249;133;123m',
-  green: '\x1b[38;2;163;238;160m',
-  yellow: '\x1b[38;2;209;154;102m',
-  blue: '\x1b[36m',
-  magenta: '\x1b[38;2;209;200;102m',
-  cyan: '\x1b[38;2;75;167;239m',
-  white: '\x1b[38;2;219;223;244m'
+    black: '\x1b[38;2;0;0;0m',
+    red: '\x1b[38;2;249;133;123m',
+    green: '\x1b[38;2;163;238;160m',
+    yellow: '\x1b[38;2;209;154;102m',
+    blue: '\x1b[36m',
+    magenta: '\x1b[38;2;209;200;102m',
+    cyan: '\x1b[38;2;75;167;239m',
+    white: '\x1b[38;2;219;223;244m'
 };
 
 const blockHeight = ref();
@@ -106,7 +106,7 @@ function connectWebSocket() {
         const message = { timestamp, data: JSON.stringify(data) };
 
         wsTerminal.value.writeln(`\x1b[32m${timestamp}\x1b[0m ${cj(message.data, undefined, customColorMap, 0)}`);
-//    wsTerminal.value.writeln(`${message.data}`);
+        //    wsTerminal.value.writeln(`${message.data}`);
 
     }
 }
@@ -119,29 +119,29 @@ onMounted(() => {
 
 <template class="pure-g">
     <h1>BTClock WebSocket Data Server</h1>
-    <form class="pure-form pure-form-stacked" id="dataForm">
+    <form class="container-fluid" id="dataForm">
 
         <fieldset>
-            <div class="pure-g pure-u-1-3">
-                <div class="pure-u-1-3"> <label for="data-price">Price</label>
+            <div class="data-form">
+                <div class="control">
+                    <label for="data-price">Price</label>
                     <input type="number" id="data-price" v-model="currentPrice" min="0" placeholder="Price" />
                 </div>
-                <div class="pure-u-1-3">
+                <div class="control">
                     <label for="data-blockHeight">Block Height</label>
                     <input type="number" id="data-blockHeight" v-model="blockHeight" min="0"
                         placeholder="Block Height" />
                 </div>
-                <div class="pure-u-1-3">
+                <div class="control">
                     <label for="data-feeRate">Fee Rate</label>
                     <input type="number" id="data-feeRate" v-model="feeRate" min="0" placeholder="Fee Rate" />
                 </div>
-
+                <div class="form-check-row">
+                    <input type="checkbox" v-model="ignoreDataSource" id="ignore-external-data" /> &nbsp;
+                    <label for="ignore-external-data" class="form-check-label">Ignore data source</label>
+                </div>
             </div>
-            <div>
-                <label for="ignore-external-data" class="pure-checkbox small">
-                    <input type="checkbox" v-model="ignoreDataSource" id="ignore-external-data" /> Ignore data source
-                </label>
-            </div>
+           
         </fieldset>
     </form>
     <div class="preview-container">
@@ -156,17 +156,16 @@ onMounted(() => {
 
         <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', false]"></BTClock>
     </div>
-    <div class="pure-g">
-        <div class="pure-u-1-2">
+    <div class="container-fluid">
+        <div class="row">
             <div id="terminalContainer" class="termContainer">
                 <WebsocketTerminal ref="wsTerminal"></WebsocketTerminal>
             </div>
-        </div>
-        <div class="pure-u-1-2">
             <div id="nostrContainer" class="termContainer">
                 <NostrTerminal></NostrTerminal>
             </div>
         </div>
+
     </div>
 
 

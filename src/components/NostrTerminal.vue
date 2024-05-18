@@ -63,6 +63,6 @@ onMounted(() => {
 </script>
 
 <template>
-    <h3>Nostr Data</h3>
+    <h5>Nostr Data</h5>
     <div id="nostrTerminal" class="terminal"></div>
 </template>

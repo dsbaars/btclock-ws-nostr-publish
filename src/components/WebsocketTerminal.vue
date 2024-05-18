@@ -28,8 +28,8 @@ defineExpose({
 </script>
 
 <template>
-    <h3>&nbsp;<div class="online-indicator" id="websocketConnection">
+    <h5>&nbsp;<div class="online-indicator" id="websocketConnection">
             <span class="blink"></span>
-        </div> Websocket Data</h3>
+        </div> Websocket Data</h5>
     <div id="terminal" class="terminal"></div>
 </template>

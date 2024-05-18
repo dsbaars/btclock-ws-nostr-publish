@@ -1,5 +1,7 @@
 @import "@fontsource/antonio/latin-400";
 @import "@fontsource/ubuntu/latin-400";
+@import "@fontsource/ubuntu/latin-700";
+
 @import "@fontsource/ubuntu-mono/latin-400";
 
 @import "@fontsource/ubuntu/latin-700";
@@ -8,21 +10,28 @@
 @import "@xterm/xterm/css/xterm.css";
 @import "purecss/build/forms.css";
 
-@import "purecss/build/grids-core.css";
-@import "purecss/build/grids-units.css";
+//@import "purecss/build/grids-core.css";
+//@import "purecss/build/grids-units.css";
 //@import "purecss/build/pure.css";
-@import "purecss/build/grids-responsive.css";
+//@import "purecss/build/grids-responsive.css";
+
+$font-family-sans-serif:      Ubuntu, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
 
 
-*:not(.terminal *):not(.btclock *) {
-    font-family: 'Ubuntu', sans-serif;
-}
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+// :root {
+//     --bs-body-font-family:  "Ubuntu", sans-serif;
+// }
+
+// *:not(.terminal *):not(.btclock *) {
+//     font-family: "Ubuntu", sans-serif;
+// }
 
 pre {
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: 'Ubuntu Mono', sans-serif;
-
+    font-family: "Ubuntu Mono", sans-serif;
 }
 
 .btclock {
@@ -30,7 +39,6 @@ pre {
     background: #000;
     border-radius: 5px;
     padding: 10px;
-    max-width: 700px;
     margin: 10px;
     display: flex;
     flex-direction: row;
@@ -38,8 +46,33 @@ pre {
     justify-content: space-between;
     align-items: center;
     align-content: stretch;
-    font-family: 'Antonio', sans-serif !important;
+    font-family: "Antonio", sans-serif !important;
 }
+
+@include media-breakpoint-down(lg) {
+    .btclock {
+        max-width: 100%;
+        margin: 0 auto;
+        margin-bottom: 10px;
+    }
+  }
+
+@include media-breakpoint-down(xl) {
+    .btclock {
+        max-width: 90%;
+        margin: 0 auto;
+        margin-bottom: 10px;
+    }
+  }
+
+@include media-breakpoint-up(xl) {
+    .btclock {
+        max-width: 33.3%;
+    }
+  }
+
+
+
 
 .btclock * {
     font-family: "Oswald", sans-serif;
@@ -60,7 +93,7 @@ pre {
     color: #fff;
 } */
 
-.btclock>div {
+.btclock > div {
     padding: 5px;
 }
 
@@ -77,18 +110,17 @@ pre {
 
 .digit {
     font-size: 4rem;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
 }
 
 .splitText div:first-child::after {
     display: block;
-    content: '';
+    content: "";
     margin-top: 0px;
     border-bottom: 2px solid;
     margin-bottom: 3px;
 }
-
 
 .mediumText {
     font-size: 2rem;
@@ -106,17 +138,74 @@ pre {
     text-align: center;
 }
 
-.preview-container {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: stretch;
-    align-content: stretch;
-    max-height: 35rem;
-    // max-width: 100%;
-    margin: 0 auto;
+@include media-breakpoint-down(md) {
+    .digit,
+.splitText,
+.mediumText {
+    border: 2px solid gold;
+    border-radius: 8px;
+    min-width: 40px;
+    margin: 5px;
+    text-align: center;
+    color: #fff;
 }
+
+    .digit {
+        font-size: 2.5rem;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
+    .splitText {
+        font-size: 0.8rem;
+        padding-top: 14px !important;
+        padding-bottom: 13px !important;
+    
+        text-align: center;
+    }
+
+    .mediumText {
+        font-size: 1.0rem;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-top: 23px !important;
+        padding-bottom: 23px !important;
+    }
+    
+  }
+
+// .preview-container {
+//     display: flex;
+//     flex-direction: column;
+//     flex-wrap: wrap;
+//     justify-content: flex-start;
+//     align-items: stretch;
+//     align-content: stretch;
+//     max-height: 35rem;
+//     // max-width: 100%;
+//     margin: 0 auto;
+// }
+
+@media (min-width: 1024px) {
+    .preview-container {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: stretch;
+        align-content: stretch;
+        max-height: 35rem;
+        // max-width: 100%;
+        margin: 0 auto;
+    }
+}
+
+
+// @media (max-width: 1024px) {
+//     .preview-container {
+//         flex-wrap: nowrap;
+//     }
+// }
 
 // .termContainer {
 //     // width: 49%;
@@ -131,51 +220,80 @@ div.online-indicator {
     width: 15px;
     height: 15px;
     margin-right: 10px;
-    
+
     background-color: red;
     border-radius: 50%;
-    
+
     position: relative;
-  }
+}
 
-  div.online-indicator.online {
+div.online-indicator.online {
     background-color: #0fcc45;
-
-  }
+}
 
 span.blink {
     display: block;
     width: 15px;
     height: 15px;
-    
+
     background-color: red;
     opacity: 0.7;
     border-radius: 50%;
-    
-    animation: blink 1s linear infinite;
-  }
 
-.online  span.blink {
+    animation: blink 1s linear infinite;
+}
+
+.online span.blink {
     display: block;
     width: 15px;
     height: 15px;
-    
+
     background-color: #0fcc45;
     opacity: 0.7;
     border-radius: 50%;
-    
+
     animation: blink 1s linear infinite;
-  }
-  
-  @keyframes blink {
-    100% { transform: scale(2, 2); 
-            opacity: 0;
-          }
-  }
+}
 
-  h1, #dataForm {
+@keyframes blink {
+    100% {
+        transform: scale(2, 2);
+        opacity: 0;
+    }
+}
+
+h1 {
+    font-weight: 600;
+}
+
+h1,
+#dataForm {
     padding: 0 15px;
-  }
+}
 
-  
-  
+.termContainer {
+    @extend .col-lg-6;
+}
+
+.data-form {
+    @extend .row;
+    @extend small;
+
+    .control {
+        @extend .col-md-3;
+        @extend .col-lg-3;
+    }
+
+    label {
+        @extend .form-label;
+    }
+
+    input:not([type="checkbox"]) {
+        @extend .form-control;
+        @extend .form-control-sm;
+    }
+
+    input[type="checkbox"] {
+        @extend .form-check-input;
+    }
+}
