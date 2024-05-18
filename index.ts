@@ -21,7 +21,7 @@ import { OwnPriceSource } from "./server/price-sources/own-price-source";
 import { WsPriceSource } from "./server/price-sources/ws-price-source";
 dotenv.config();
 
-const logger = pino({
+const logger = pino({   
     level: process.env.LOGLEVEL || 'info',
     transport: {
         target: 'pino-pretty',
@@ -129,10 +129,14 @@ if (useOwnPriceData) {
     priceSource = new CoincapPriceSource(logger);
 }
 
-priceSource.on('priceUpdate', async(lastPrice) => {
+priceSource.on('priceUpdate', async(newPrice) => {
         let source = useOwnPriceData ? "median" : "coinCapWs";
 
+        lastPrice = newPrice;
+
         let output = { "bitcoin": lastPrice }
+
+
 
         for (const client of clients) {
             client.send(JSON.stringify(output));
