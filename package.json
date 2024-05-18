@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "vite build --emptyOutDir",
     "dev": "tsx index.ts --dev",
     "start": "tsx index.ts"
   },
