@@ -12,6 +12,7 @@
   "dependencies": {
     "@fastify/static": "^7.0.4",
     "@fastify/vite": "^6.0.6",
+    "@fastify/vue": "^0.5.0",
     "@fastify/websocket": "^8.3.0",
     "@fontsource/antonio": "^5.0.20",
     "@fontsource/oswald": "^5.0.20",

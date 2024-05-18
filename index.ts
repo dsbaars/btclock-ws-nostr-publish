@@ -16,6 +16,9 @@ import * as os from 'os';
 
 import * as dotenv from 'dotenv';
 import { exit } from "process";
+import { CoincapPriceSource } from "./server/price-sources/coincap-ws";
+import { OwnPriceSource } from "./server/price-sources/own-price-source";
+import { WsPriceSource } from "./server/price-sources/ws-price-source";
 dotenv.config();
 
 const logger = pino({
@@ -54,6 +57,8 @@ try {
 let keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV);
 
 let publishToNostr: boolean = process.env.PUBLISH_TO_NOSTR === "true" ? true : false || false;
+let useOwnPriceData: boolean = process.env.OWN_PRICE_DATA === "true" ? true : false || false;
+
 logger.info(`Publish to nostr ${publishToNostr}`);
 
 const ndk = new NDK({
@@ -116,24 +121,16 @@ if (publishToNostr) {
 
 let lastPublish: number;
 
-let createPriceWebSocket = () => {
-    const ws = new WebSocket("wss://ws.coincap.io/prices?assets=bitcoin");
+let priceSource:WsPriceSource;
 
-    ws.on('open', () => {
-        logger.info('Connected to CoinCap.io');
-    });
+if (useOwnPriceData) {
+    priceSource = new OwnPriceSource(logger);
+} else {
+    priceSource = new CoincapPriceSource(logger);
+}
 
-    ws.on('message', async (message) => {
-        const messageString = message.toString();
-        const jsonMsg = JSON.parse(messageString);
-
-        if (!jsonMsg)
-            return;
-
-        if (Math.round(jsonMsg.bitcoin) == lastPrice)
-            return;
-
-        lastPrice = Math.round(jsonMsg.bitcoin);
+priceSource.on('priceUpdate', async(lastPrice) => {
+        let source = useOwnPriceData ? "median" : "coinCapWs";
 
         let output = { "bitcoin": lastPrice }
 
@@ -153,7 +150,7 @@ let createPriceWebSocket = () => {
         ndkEvent.tags = [
             ["expiration", String(Math.floor(expire.getTime() / 1000))],
             ["type", "priceUsd"],
-            ["source", "coinCapWS"],
+            ["source", source],
         ];
 
         if (publishToNostr) {
@@ -165,20 +162,7 @@ let createPriceWebSocket = () => {
         } else {
             logger.info("Nostr publishing disabled, not publishing price update", ndkEvent.rawEvent());
         }
-
-    });
-
-    ws.on('close', (code, reason) => {
-        logger.info(`Connection to external CoinCap.io WebSocket closed with code ${code} and reason: ${reason}`);
-        // Attempt to reconnect after a delay (e.g., 5 seconds)
-        setTimeout(createPriceWebSocket, 1000);
-    });
-
-    return ws;
-}
-
-let externalWebSocket = createPriceWebSocket();
-
+})
 
 const initMempool = async () => {
 

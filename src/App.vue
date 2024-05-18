@@ -117,7 +117,7 @@ onMounted(() => {
 
 </script>
 
-<template>
+<template class="pure-g">
     <h1>BTClock WebSocket Data Server</h1>
     <form class="pure-form pure-form-stacked" id="dataForm">
 

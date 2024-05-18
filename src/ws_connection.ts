@@ -34,6 +34,10 @@ export class WsConnection extends EventEmitter {
         });
     }
 
+    send(data: string) {
+        this.instance?.send(data);
+    }
+
     reconnect() {
         this.instance = null;
         setTimeout(() => {

@@ -41,7 +41,7 @@
 </script>
 
 <template>
-    <div class="btclock">
+    <div class="btclock pure-u-1 pure-u-md-1-3">
         <template v-for="c in characters" >
             <div v-if="isSplitText(c)" class="splitText">
                 <div class="flex-items"  v-for="part in c.split('/')">
