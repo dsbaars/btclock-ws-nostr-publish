@@ -154,6 +154,8 @@ priceSource.on('priceUpdate', async(newPrice) => {
         ndkEvent.tags = [
             ["expiration", String(Math.floor(expire.getTime() / 1000))],
             ["type", "priceUsd"],
+            ["medianFee", String(lastMedianFee)],
+            ["block", String(lastBlock)],
             ["source", source],
         ];
 
@@ -247,10 +249,10 @@ const initMempool = async () => {
             }
 
             if (publishToNostr) {
-                await ndkEvent.publish().then(e => {
-                }).catch(e => {
-                    console.error("Error publishing fee-update");
-                })
+                // await ndkEvent.publish().then(e => {
+                // }).catch(e => {
+                //     console.error("Error publishing fee-update");
+                // })
             }
             else {
                 logger.info("Nostr publishing disabled, not publishing fee update", ndkEvent.rawEvent());
