@@ -247,11 +247,10 @@ const initMempool = async () => {
             }
 
             if (publishToNostr) {
-
-                // await ndkEvent.publish().then(e => {
-                // }).catch(e => {
-                //     console.error("Error publishing fee-update");
-                // })
+                await ndkEvent.publish().then(e => {
+                }).catch(e => {
+                    console.error("Error publishing fee-update");
+                })
             }
             else {
                 logger.info("Nostr publishing disabled, not publishing fee update", ndkEvent.rawEvent());
