@@ -4,7 +4,7 @@ import { WsPriceSource } from "./ws-price-source";
 export class GeminiPriceSource extends WsPriceSource {
   protected pair: string;
   constructor(pair: string = 'BTCUSD') {
-    const ws = new WsConnection(`wss://api.gemini.com/v1/marketdata/${pair}`);
+    const ws = new WsConnection(`wss://api.gemini.com/v1/multimarketdata?symbols=BTCUSD,BTCEUR,BTCGBP,BTCSGD`);
     super();
     this.pair = pair;
 

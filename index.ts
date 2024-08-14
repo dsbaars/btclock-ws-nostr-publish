@@ -16,13 +16,13 @@ import { exit } from "process";
 import { CoincapPriceSource } from "./server/price-sources/coincap-ws";
 import { OwnPriceSource } from "./server/price-sources/own-price-source";
 import { PriceUpdate, WsPriceSource } from "./server/price-sources/ws-price-source";
-import { nostrPublishBlockEvent, nostrPublishPriceEvent } from "./server/publisher/nostr";
 import { DataStorage } from "./server/storage";
 import { Ws1Publisher } from "./server/publisher/ws1";
 import mainLogger from './server/logger';
 import { Ws2Publisher } from "./server/publisher/ws2";
 import EventEmitter from 'node:events';
 import { DataConfig } from "./server/config";
+import { NostrPublisher } from "./server/publisher/nostr";
 
 const logger = mainLogger.child({ module: "fastify" })
 const { bitcoin: { blocks, fees } } = mempoolJS({
@@ -32,6 +32,10 @@ const { bitcoin: { blocks, fees } } = mempoolJS({
 let useOwnPriceData: boolean = process.env.OWN_PRICE_DATA === "true" ? true : false || false;
 
 let emitter = new EventEmitter();
+
+let nostrPublisher = new NostrPublisher();
+
+nostrPublisher.connect();
 
 let ws1Publisher = new Ws1Publisher(emitter);
 let ws2Publisher = new Ws2Publisher(emitter);
@@ -48,16 +52,36 @@ try {
     exit(1);
 }
 
+const handlePriceUpdate = async(update: PriceUpdate) => {
+    let source = useOwnPriceData ? "median" : "coinCapWs";
+    DataStorage.lastPrice.set(update.pair, update.price);
+
+    emitter.emit("newPrice", update);
+
+    if (update.pair == "USD") {
+        let currentDate = Date.now();
+        if (currentDate / 1000 - lastPublish < 15) return;
+        lastPublish = await nostrPublisher.nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
+            ["medianFee", String(DataStorage.lastMedianFee)],
+            ["block", String(DataStorage.lastBlock)],
+        ]) || lastPublish;      
+    }  
+}
+
 let lastPublish: number;
 let usdPriceSource:WsPriceSource;
-let eurPriceSource:WsPriceSource;
-eurPriceSource = new OwnPriceSource(logger, 'EUR', DataConfig.eurSources);
+
+// eurPriceSource = new OwnPriceSource(logger, 'EUR', DataConfig.eurSources);
 
 if (useOwnPriceData) {
     let logger = mainLogger.child({ module: "ownPriceSource" })
 
     usdPriceSource = new OwnPriceSource(logger, 'USD', DataConfig.usdSources);
-    eurPriceSource = new OwnPriceSource(logger, 'EUR', DataConfig.eurSources);
+
+    for (let cur of ['EUR', 'JPY', 'GBP', 'CAD', 'SGD', 'CHF', 'AUD']) {
+        let newCur = new OwnPriceSource(logger, cur, DataConfig.eurSources);
+        newCur.on('priceUpdate', handlePriceUpdate)
+    }
 
 } else {
     let logger = mainLogger.child({ module: "coincapPriceSource" })
@@ -65,28 +89,10 @@ if (useOwnPriceData) {
     usdPriceSource = new CoincapPriceSource(logger);
 }
 
-usdPriceSource.on('priceUpdate', async(update: PriceUpdate) => {
-        let source = useOwnPriceData ? "median" : "coinCapWs";
-        DataStorage.lastPrice.set(update.pair, update.price);
 
-        emitter.emit("newPrice");
 
-        let currentDate = Date.now();
-        if (currentDate / 1000 - lastPublish < 15) return;
-        lastPublish = await nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
-            ["medianFee", String(DataStorage.lastMedianFee)],
-            ["block", String(DataStorage.lastBlock)],
-        ]) || lastPublish;        
-})
 
-if (eurPriceSource) {
-    eurPriceSource.on('priceUpdate', async(update: PriceUpdate) => {
-        let source = useOwnPriceData ? "median" : "coinCapWs";
-        DataStorage.lastPrice.set(update.pair, update.price);
-
-        emitter.emit("newPrice");       
-    })
-}
+usdPriceSource.on('priceUpdate', handlePriceUpdate)
 
 const initMempool = async () => {
 
@@ -109,7 +115,7 @@ const initMempool = async () => {
             expire.setMinutes(expire.getMinutes() + 240);
 
 
-            nostrPublishBlockEvent(res.block.height, "mempoolWs");
+            nostrPublisher.nostrPublishBlockEvent(res.block.height, "mempoolWs");
             DataStorage.lastBlock = res.block.height;
             emitter.emit("newBlock");
 

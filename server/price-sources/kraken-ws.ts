@@ -22,7 +22,7 @@ export class KrakenPriceSource extends WsPriceSource {
       };
 
       ws.send(JSON.stringify(subscribeMessage));
-      console.log('Kraken: Subscribed to BTC/USD ticker');
+      console.log(`Kraken: Subscribed to ${subscribeMessage.pair.join(',')} ticker`);
     });
 
     ws.on('message', (data) => {

@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import NDK, { NDKEvent, NDKFilter, NDKPrivateKeySigner } from "@nostr-dev-kit/ndk";
+import NDK, { NDKEvent, NDKFilter, NDKPrivateKeySigner, NDKPublishError, NDKRelaySet } from "@nostr-dev-kit/ndk";
 import mainLogger from '../logger';
 import { NostrConfig } from '../config';
 import * as dotenv from 'dotenv';
@@ -14,107 +14,177 @@ let keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV);
 
 let publishToNostr: boolean = process.env.PUBLISH_TO_NOSTR === "true" ? true : false || false;
 
-logger.info(`Publish to nostr ${publishToNostr}`);
+export class NostrPublisher {
+    protected ndk: NDK;
+    protected relaySet: NDKRelaySet;
 
-const ndk = new NDK({
-    explicitRelayUrls: NostrConfig.relayUrls,
-    signer: keySigner,
-});
+    constructor() {
+        logger.info(`Publish to nostr ${publishToNostr}`);
 
-if (publishToNostr) {
-    await ndk.connect(6000);
 
-    const filter: NDKFilter = { kinds: [1, 5], authors: [process.env.NOSTR_PUB || getPublicKey(hexToBytes(keySigner.privateKey || ""))] };
 
-    let lastEventId: string = "";
+        this.ndk = new NDK({
+            explicitRelayUrls: [
+                "wss://nostr.dbtc.link",
+                "wss://nostr1.daedaluslabs.io",
+                "wss://nostr2.daedaluslabs.io",
+                "wss://nostr3.daedaluslabs.io",
+                // "wss://pablof7z.nostr1.com",
+                // "wss://offchain.pub",
+                // "wss://relay.f7z.io",
+                // "wss://relay.damus.io",
+                // "wss://relay.snort.social",
+                // "wss://offchain.pub/",
+                // "wss://nostr.mom",
+                // "wss://nostr-pub.wellorder.net",
+                // "wss://purplepag.es",
+                // "wss://brb.io/",
+            ],
+            signer: keySigner,
+            enableOutboxModel: false,
+            autoConnectUserRelays: false,
+            clientName: "BTClock"
+        });
 
-    let subscription = ndk.subscribe(filter);
-    subscription.on('event', async (e) => {
-        if (e.kind == 1) {
-            if (lastEventId.length && e.tags[1][1] == "priceUsd") {
-                const ndkEvent = new NDKEvent(ndk);
-                let currentDate = Date.now();
+        this.relaySet = NDKRelaySet.fromRelayUrls([
+            "wss://nostr1.daedaluslabs.io",
+            "wss://nostr2.daedaluslabs.io",
+            "wss://nostr3.daedaluslabs.io",
+        ], this.ndk, true);
 
-                ndkEvent.kind = 5;
-                ndkEvent.created_at = Math.floor(currentDate / 1000);
-                ndkEvent.content = "";
-                ndkEvent.tags = [
-                    ["e", lastEventId],
-                ];
+        this.ndk.pool?.on("relay:connecting", (relay) => {
+            logger.info(`Connecting to relay ${relay.url}`);
+        });
 
-                lastEventId = "";
-                if (publishToNostr) {
-                    await ndkEvent.publish();
-                } else {
-                    logger.debug("Nostr publishing disabled, not publishing delete event");
+        this.ndk.pool?.on("relay:connect", (relay) => {
+            logger.info(`Connected to relay ${relay.url}`);
+        });
+
+        this.ndk.pool?.on("relay:disconnect", (relay) => {
+            logger.info(`Disconnected relay ${relay.url}`);
+        });
+
+        this.ndk.on("event:publish-failed", this.handlePublishingFailures);
+    }
+
+    handlePublishingFailures(event: NDKEvent, error: NDKPublishError) {
+        logger.error(`Event ${event.id} failed to publish`, { publishedToRelays: error.publishedToRelays });
+    }
+
+    async connect() {
+        if (publishToNostr) {
+            this.ndk.connect().then(async () => {
+                const filter: NDKFilter = { kinds: [1, 5], authors: ['642317135fd4c4205323b9dea8af3270657e62d51dc31a657c0ec8aab31c6288'] };
+
+                let lastEventId: string = "";
+
+                let subscription = await this.ndk.subscribe(filter, {}, this.relaySet);
+                subscription.on('event', async (e) => {
+                    if (e.kind == 1) {
+                        if (lastEventId.length && e.tags[1][1] == "priceUsd") {
+                            const ndkEvent = new NDKEvent(this.ndk);
+                            let currentDate = Date.now();
+
+                            ndkEvent.kind = 5;
+                            ndkEvent.created_at = Math.floor(currentDate / 1000);
+                            ndkEvent.content = "";
+                            ndkEvent.tags = [
+                                ["e", lastEventId],
+                            ];
+
+                            lastEventId = "";
+                            if (publishToNostr) {
+                                await ndkEvent.publish();
+                            } else {
+                                logger.debug("Nostr publishing disabled, not publishing delete event");
+                            }
+                        }
+
+                        lastEventId = e.id;
+                    }
+                    if (e.kind == 5) {
+                    }
+                })
+            })
+        }
+    }
+
+    private hasRelays() {
+        return this.ndk.pool.connectedRelays().length;
+    }
+
+    async nostrPublishPriceEvent(price: number, type: string, source: string, extraTags: any[] = []): Promise<number | false> {
+        if (!this.hasRelays())
+            return false;
+
+        let expire = new Date();
+        expire.setMinutes(expire.getMinutes() + 1);
+        const ndkEvent = new NDKEvent(this.ndk);
+        ndkEvent.kind = 1;
+        ndkEvent.content = price.toString();
+        ndkEvent.tags = [
+            ["expiration", String(Math.floor(expire.getTime() / 1000))],
+            ["type", "priceUsd"],
+            ["source", source],
+            ...extraTags
+        ];
+
+        await ndkEvent.sign();
+
+        if (publishToNostr) {
+            try {
+                await ndkEvent.publish().then(e => {
+                    return Date.now() / 1000;
+                }).catch(e => {
+                    logger.error("Error publishing price");
+                })
+            } catch (e: unknown) {
+                if (e instanceof NDKPublishError) {
+                    logger.error(e);
                 }
             }
-
-            lastEventId = e.id;
-        }
-        if (e.kind == 5) {
-        }
-    })
-
-}
-
-const nostrPublishPriceEvent = async (price: number, type: string, source: string, extraTags: any[] = []): Promise<number | false> => {
-    await ndk.connect(6000);
-
-    let expire = new Date();
-    expire.setMinutes(expire.getMinutes() + 1);
-    const ndkEvent = new NDKEvent(ndk);
-    ndkEvent.kind = 1;
-    ndkEvent.content = price.toString();
-    ndkEvent.tags = [
-        ["expiration", String(Math.floor(expire.getTime() / 1000))],
-        ["type", "priceUsd"],
-        ["source", source],
-        ...extraTags
-    ];
-
-    if (publishToNostr) {
-        await ndkEvent.publish().then(e => {
             return Date.now() / 1000;
-        }).catch(e => {
-            logger.error("Error publishing price");
-        })
-    } else {
-        logger.debug("Nostr publishing disabled, not publishing price update");
+        } else {
+            logger.debug("Nostr publishing disabled, not publishing price update");
+        }
+        return false;
     }
-    return false;
+
+    async nostrPublishBlockEvent(blockHeight: number, source: string) {
+        if (!this.hasRelays())
+            return false;
+
+        let currentDate = Date.now();
+        let expire = new Date(currentDate);
+        expire.setMinutes(expire.getMinutes() + 240);
+
+        const ndkEvent = new NDKEvent(this.ndk);
+
+        ndkEvent.kind = 1;
+        ndkEvent.created_at = Math.floor(currentDate / 1000);
+        ndkEvent.tags = [
+            ["expiration", String(Math.floor(expire.getTime() / 1000))],
+            ["type", "blockHeight"],
+            ["source", "mempoolWS"]
+        ];
+        ndkEvent.content = String(blockHeight);
+
+        if (publishToNostr) {
+            try {
+                await ndkEvent.publish().then(e => {
+                    return Date.now() / 1000;
+                }).catch(e => {
+                    logger.error("Error publishing block");
+                })
+            } catch (e: unknown) {
+                if (e instanceof NDKPublishError) {
+                    logger.error(e);
+                }
+            }
+        }
+        else {
+            logger.debug("Nostr publishing disabled, not publishing block update");
+        }
+    }
 }
 
-const nostrPublishBlockEvent = async (blockHeight: number, source: string) => {
-    await ndk.connect(6000);
-
-    let currentDate = Date.now();
-    let expire = new Date(currentDate);
-    expire.setMinutes(expire.getMinutes() + 240);
-
-    const ndkEvent = new NDKEvent(ndk);
-
-    ndkEvent.kind = 1;
-    ndkEvent.created_at = Math.floor(currentDate / 1000);
-    ndkEvent.tags = [
-        ["expiration", String(Math.floor(expire.getTime() / 1000))],
-        ["type", "blockHeight"],
-        ["source", "mempoolWS"]
-    ];
-    ndkEvent.content = String(blockHeight);
-
-    if (publishToNostr) {
-        await ndkEvent.publish().then(e => {
-        }).catch(e => {
-            logger.error("Error publishing block");
-        })
-    }
-    else {
-        logger.debug("Nostr publishing disabled, not publishing block update");
-    }
-}
-
-export {
-    nostrPublishPriceEvent,
-    nostrPublishBlockEvent
-}

@@ -8,7 +8,7 @@ export class CoinbasePriceSource extends WsPriceSource {
         ws.on('open', () => {
             const subscribeMessage = {
                 type: 'subscribe',
-                product_ids: ['BTC-USD', 'BTC-EUR'],
+                product_ids: ['BTC-USD', 'BTC-EUR', 'BTC-GBP'],
                 channels: ['ticker']
             };
 

@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { DataStorage } from '../storage';
 import EventEmitter from 'node:events';
+import { PriceUpdate } from '../price-sources/ws-price-source';
 
 export class Ws1Publisher {
     protected clients: Set<WebSocket> = new Set();
@@ -8,7 +9,10 @@ export class Ws1Publisher {
     constructor(emitter: EventEmitter) {
         this.clients = new Set();
 
-        emitter.on("newPrice", () => { this.onNewPrice() });
+        emitter.on("newPrice", (update: PriceUpdate) => { 
+            if (update.pair != "USD") return;
+            this.onNewPrice() 
+        });
         emitter.on("newFee", () => { this.onNewFee() });
         emitter.on("newBlock", () => { this.onNewBlock() });
     }
