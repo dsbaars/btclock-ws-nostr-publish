@@ -153,7 +153,7 @@ function connectWebSocket2() {
     socket.on('close', (event) => {
         if (isOpen) {
             let timestamp = new Date().toLocaleString();
-            wsTerminal.value.writeln(`\x1b[32m${timestamp}\x1b[36m WebSocket connection closed`);
+            wsTerminal2.value.writeln(`\x1b[32m${timestamp}\x1b[36m WebSocket connection closed`);
             isOpen = false;
         }
 
