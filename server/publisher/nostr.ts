@@ -59,6 +59,8 @@ if (publishToNostr) {
 }
 
 const nostrPublishPriceEvent = async (price: number, type: string, source: string, extraTags: any[] = []): Promise<number | false> => {
+    await ndk.connect(6000);
+
     let expire = new Date();
     expire.setMinutes(expire.getMinutes() + 1);
     const ndkEvent = new NDKEvent(ndk);
@@ -78,12 +80,14 @@ const nostrPublishPriceEvent = async (price: number, type: string, source: strin
             logger.error("Error publishing price");
         })
     } else {
-        logger.debug("Nostr publishing disabled, not publishing price update", ndkEvent.rawEvent());
+        logger.debug("Nostr publishing disabled, not publishing price update");
     }
     return false;
 }
 
 const nostrPublishBlockEvent = async (blockHeight: number, source: string) => {
+    await ndk.connect(6000);
+
     let currentDate = Date.now();
     let expire = new Date(currentDate);
     expire.setMinutes(expire.getMinutes() + 240);
@@ -106,7 +110,7 @@ const nostrPublishBlockEvent = async (blockHeight: number, source: string) => {
         })
     }
     else {
-        logger.debug("Nostr publishing disabled, not publishing block update", ndkEvent.rawEvent());
+        logger.debug("Nostr publishing disabled, not publishing block update");
     }
 }
 
