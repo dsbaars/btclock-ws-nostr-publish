@@ -28,7 +28,7 @@ export class BitfinexPriceSource extends WsPriceSource {
         const tickerData = message[1];
         const [bid, bidSize, ask, askSize, dailyChange, dailyChangePerc, lastPrice, volume, high, low] = tickerData;
 //        console.log(`BTC/USD Price: ${lastPrice}`);
-        this.emit('priceUpdate', { source: 'bitfinex', pair: "BTC/USD", price: lastPrice } );
+        this.emit('priceUpdate', { source: 'bitfinex', pair: "USD", price: lastPrice } );
 
       }
     });

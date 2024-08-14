@@ -3,10 +3,10 @@ import { BitflyerPriceSource } from "./bitflyer-ws";
 import { CoinbasePriceSource } from "./coinbase-ws";
 import { GeminiPriceSource } from "./gemini-ws";
 import { KrakenPriceSource } from "./kraken-ws";
-import pino from 'pino'
-import { Logger } from 'pino';
 
-import { WsPriceSource } from "./ws-price-source";
+import { PriceUpdate, WsPriceSource } from "./ws-price-source";
+
+import pino from 'pino'
 
 // const logger = pino({
 //     name: 'WsPriceSources',
@@ -21,11 +21,11 @@ import { WsPriceSource } from "./ws-price-source";
 
 export class OwnPriceSource extends WsPriceSource {
     sources = {
-        kraken: new KrakenPriceSource(),
-        gemini: new GeminiPriceSource(),
-        coinbase: new CoinbasePriceSource(),
-        bitfinex: new BitfinexPriceSource(),
-        bitflyer: new BitflyerPriceSource(),
+        // kraken: new KrakenPriceSource(),
+        // gemini: new GeminiPriceSource(),
+        // coinbase: new CoinbasePriceSource(),
+        // bitfinex: new BitfinexPriceSource(),
+        // bitflyer: new BitflyerPriceSource(),
     }
 
     lastPrices = {
@@ -46,23 +46,24 @@ export class OwnPriceSource extends WsPriceSource {
 
     lastAvgPrice = 0;
 
-    logger: Logger | null;
+    logger: pino.Logger;
+    protected pair: string;
 
-
-    constructor(logger: Logger) {
+    constructor(logger: pino.Logger, pair: string = "USD", sources: { [key: string]: WsPriceSource }) {
         super();
+        this.sources = sources;
 
         this.logger = logger;
+        this.pair = pair;
 
-        for (let item of Object.keys(this.lastPrices)) {
-            console.log(item);
-
-            this.sources[item].on('priceUpdate', (data) => {
-                if (item === "kraken" && data.pair !== 'XBT/USD')
+        for (let item of Object.keys(this.sources)) {
+            this.sources[item].on('priceUpdate', (data: PriceUpdate) => {
+                if (data.pair != pair) {
                     return;
+                }
 
-                this.lastPrices[item] = parseFloat(data.price);
-                this.lastUpdates[item] = new Date().getMilliseconds();
+                this.lastPrices[item as keyof typeof this.sources] = parseFloat(data.price);
+                this.lastUpdates[item as keyof typeof this.sources] = new Date().getMilliseconds();
 
                 this.emitNewValue();
             })
@@ -85,8 +86,8 @@ export class OwnPriceSource extends WsPriceSource {
         let avgPrice = Math.round(this.removeOutliersAndCalculateAverage(filteredData, 50));
 
         if (avgPrice != this.lastAvgPrice && Math.abs(this.lastAvgPrice - avgPrice) > 2) {
-            this.logger.info(`Average price ${avgPrice} from ${validValues} sources`);
-            this.emit('priceUpdate', avgPrice);
+            this.logger.debug(`Average price ${this.pair} ${avgPrice} from ${validValues} sources`);
+            this.emit('priceUpdate', { price: avgPrice, pair: this.pair });
             this.lastAvgPrice = avgPrice
         }
     }

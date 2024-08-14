@@ -2,7 +2,7 @@ import { WsConnection } from "../../src/ws_connection";
 import { WsPriceSource } from "./ws-price-source";
 
 export class KrakenPriceSource extends WsPriceSource {
-  constructor() {
+  constructor(pair:string) {
     const ws = new WsConnection('wss://ws.kraken.com');
     ws.on('open', () => {
       const subscribeMessage = {
@@ -37,7 +37,7 @@ export class KrakenPriceSource extends WsPriceSource {
       if (Array.isArray(message) && message[2] === 'ticker') {
         const tickerData = message[1];
         //console.log(`${message[3]} Price: ${tickerData.c[0]}`);
-        this.emit('priceUpdate', { source: 'kraken', pair: message[3], price: tickerData.c[0] } );
+        this.emit('priceUpdate', { source: 'kraken', pair: String(message[3]).substring(4), price: tickerData.c[0] } );
       }
     });
 

@@ -2,25 +2,26 @@ import { WsConnection } from "../../src/ws_connection";
 import { WsPriceSource } from './ws-price-source';
 
 export class CoinbasePriceSource extends WsPriceSource {
-    constructor() {
+    protected pair: string;
+    constructor(pair: string = 'BTC-USD') {
         const ws = new WsConnection('wss://ws-feed.pro.coinbase.com');
         ws.on('open', () => {
             const subscribeMessage = {
                 type: 'subscribe',
-                product_ids: ['BTC-USD'],
+                product_ids: ['BTC-USD', 'BTC-EUR'],
                 channels: ['ticker']
             };
 
             ws.send(JSON.stringify(subscribeMessage));
-            console.log('Coinbase: Subscribed to BTC/USD ticker');
+            console.log(`Coinbase: Subscribed to ${pair} ticker`);
         });
 
         ws.on('message', (data) => {
             const message = JSON.parse(data.toString());
 
-            if (message.type === 'ticker' && message.product_id === 'BTC-USD') {
+            if (message.type === 'ticker' && message.product_id === pair) {
 //                console.log(`BTC/USD Price: ${message.price}`);
-                this.emit('priceUpdate', { source: 'coinbase', pair: message.product_id, price: message.price } );
+                this.emit('priceUpdate', { source: 'coinbase', pair: String(message.product_id).substring(4), price: message.price } );
 
             }
         });
@@ -34,5 +35,6 @@ export class CoinbasePriceSource extends WsPriceSource {
         });
         ws.open();
         super();
+        this.pair = pair;
     }
 }

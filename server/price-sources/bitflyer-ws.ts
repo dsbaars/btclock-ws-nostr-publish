@@ -14,15 +14,28 @@ export class BitflyerPriceSource extends WsPriceSource {
 
             ws.send(JSON.stringify(subscribeMessage));
             console.log('Bitflyer: Subscribed to BTC/USD ticker');
+
+            const subscribeMessage2 = {
+                method: 'subscribe',
+                params: {
+                    channel: 'lightning_ticker_BTC_EUR'
+                }
+            };
+
+            ws.send(JSON.stringify(subscribeMessage2));
+            console.log('Bitflyer: Subscribed to BTC/EUR ticker');
         });
 
         ws.on('message', (data) => {
             const message = JSON.parse(data.toString());
-
             if (message.params && message.params.channel === 'lightning_ticker_BTC_USD') {
                 const tickerData = message.params.message;
-//                console.log(`BTC/USD Price: ${tickerData.ltp}`);
-                this.emit('priceUpdate', { source: 'bitflyer', pair: "BTC/USD", price: tickerData.ltp } );
+                this.emit('priceUpdate', { source: 'bitflyer', pair: String(tickerData.product_code).substring(4), price: tickerData.ltp } );
+
+            }
+            if (message.params && message.params.channel === 'lightning_ticker_BTC_EUR') {
+                const tickerData = message.params.message;
+                this.emit('priceUpdate', { source: 'bitflyer', pair: String(tickerData.product_code).substring(4), price: tickerData.ltp } );
 
             }
         });

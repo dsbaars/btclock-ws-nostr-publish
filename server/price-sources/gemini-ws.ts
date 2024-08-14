@@ -2,11 +2,14 @@ import { WsConnection } from "../../src/ws_connection";
 import { WsPriceSource } from "./ws-price-source";
 
 export class GeminiPriceSource extends WsPriceSource {
-  constructor() {
-    const ws = new WsConnection('wss://api.gemini.com/v1/marketdata/BTCUSD');
+  protected pair: string;
+  constructor(pair: string = 'BTCUSD') {
+    const ws = new WsConnection(`wss://api.gemini.com/v1/marketdata/${pair}`);
+    super();
+    this.pair = pair;
 
     ws.on('open', () => {
-      console.log('Gemini: Connected to Gemini BTC/USD WebSocket');
+      console.log(`Gemini: Connected to Gemini ${pair} WebSocket`);
     });
 
     ws.on('message', (data) => {
@@ -16,7 +19,7 @@ export class GeminiPriceSource extends WsPriceSource {
         message.events.forEach((event: any) => {
           if (event.type === 'trade') {
 //            console.log(`BTC/USD Trade: Price=${event.price}, Amount=${event.amount}`);
-            this.emit('priceUpdate', { source: 'ge,omo', pair: "BTCUSD", price: event.price } );
+            this.emit('priceUpdate', { source: 'gemini', pair: String(this.pair).substring(3), price: event.price } );
 
           }
         });
@@ -32,6 +35,7 @@ export class GeminiPriceSource extends WsPriceSource {
     });
 
     ws.open();
-    super();
+ 
+
   }
 }
