@@ -1,7 +1,15 @@
 <script setup>
 import { Terminal } from '@xterm/xterm';
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { FitAddon } from '@xterm/addon-fit';
+
+defineProps({
+    componentId: "websocketConnection",
+    version: "",
+})
+
+const wsTerminal = ref(null);
+
 
 let term = new Terminal({
     disableStdin: true,
@@ -18,7 +26,7 @@ const writeln = (data) => {
 }
 
 onMounted(() => {
-    term.open(document.getElementById('terminal'));
+    term.open(wsTerminal.value);
     fitAddon.fit();
 });
 
@@ -28,8 +36,8 @@ defineExpose({
 </script>
 
 <template>
-    <h5>&nbsp;<div class="online-indicator" id="websocketConnection">
+    <h5>&nbsp;<div class="online-indicator" :id="componentId + '_indicator'">
             <span class="blink"></span>
-        </div> Websocket Data</h5>
-    <div id="terminal" class="terminal"></div>
+        </div> Websocket Data {{ version }}</h5>
+    <div ref="wsTerminal" class="terminal"></div>
 </template>
