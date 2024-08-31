@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, ref, onMounted, watch } from 'vue'
-import { CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY, CURRENCY_CHF, CURRENCY_AUD, CURRENCY_CAD, CURRENCY_USD } from '../constants';
+import { CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY, CURRENCY_AUD, CURRENCY_CAD, CURRENCY_USD } from '../constants';
 
 const Module = inject('Module')
 
@@ -52,8 +52,6 @@ function getCurrencySymbol(input: string): string {
                 return '£'; // Pound symbol
             case CURRENCY_JPY:
                 return '¥'; // Yen symbol
-            case CURRENCY_CHF:
-                return '₣'; // Swiss Franc symbol
             case CURRENCY_AUD:
             case CURRENCY_CAD:
             case CURRENCY_USD:

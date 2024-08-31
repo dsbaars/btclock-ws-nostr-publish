@@ -10,7 +10,7 @@ import { tsParticles } from "@tsparticles/engine";
 import { confetti } from "@tsparticles/confetti";
 import { WsConnection } from "./ws_connection";
 import "toastify-js/src/toastify.css"
-import { CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY, CURRENCY_CHF, CURRENCY_AUD, CURRENCY_CAD, CURRENCY_USD } from './constants';
+import { CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY, CURRENCY_AUD, CURRENCY_CAD, CURRENCY_USD } from './constants';
 
 const wsTerminal = ref(null);
 const wsTerminal2 = ref(null);
@@ -278,9 +278,6 @@ onMounted(() => {
 
         <BTClock :data="currentPriceOther.AUD" method="parsePriceData" :params="[CURRENCY_AUD, false]"></BTClock>
         <BTClock :data="currentPriceOther.AUD" method="parseSatsPerCurrency" :params="[CURRENCY_AUD, false]"></BTClock>
-
-        <BTClock :data="currentPriceOther.CHF" method="parsePriceData" :params="[CURRENCY_CHF, false]"></BTClock>
-        <BTClock :data="currentPriceOther.CHF" method="parseSatsPerCurrency" :params="[CURRENCY_CHF, false]"></BTClock>
 
         <BTClock :data="currentPriceOther.CAD" method="parsePriceData" :params="[CURRENCY_CAD, false]"></BTClock>
         <BTClock :data="currentPriceOther.CAD" method="parseSatsPerCurrency" :params="[CURRENCY_CAD, false]"></BTClock>
