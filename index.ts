@@ -207,11 +207,11 @@ server.get('/ws', { websocket: true }, (connection, req) => {
     ws1Publisher.newClient(connection.socket);
 })
 
-server.get('/v1/ws', { websocket: true }, (connection, req) => {
+server.get('/api/v1/ws', { websocket: true }, (connection, req) => {
     ws1Publisher.newClient(connection.socket);
 })
 
-server.get('/v2/ws', { websocket: true }, (connection, req) => {
+server.get('/api/v2/ws', { websocket: true }, (connection, req) => {
     ws2Publisher.newClient(connection.socket);  
 });
 // await server.vite.ready()

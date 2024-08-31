@@ -123,7 +123,7 @@ function connectWebSocket() {
 
 function connectWebSocket2() {
     const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const websocketUrl = websocketProtocol + '//' + window.location.host + '/v2/ws';
+    const websocketUrl = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
 
     const socket = new WsConnection(websocketUrl);
 
