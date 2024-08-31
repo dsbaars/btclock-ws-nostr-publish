@@ -27,14 +27,15 @@ const customColorMap = {
 };
 
 const blockHeight = ref();
-blockHeight.value = 843401;
+blockHeight.value = 859000;
 const feeRate = ref();
-feeRate.value = 15;
+feeRate.value = 5;
 const currentPrice = ref();
 const currentPriceOther = ref();
 currentPriceOther.value={};
 currentPrice.value = 60000;
 const ignoreDataSource = ref();
+const showOtherCurrencies = ref(false);
 
 function connectWebSocket() {
     const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -249,6 +250,10 @@ onMounted(() => {
                     <input type="checkbox" v-model="ignoreDataSource" id="ignore-external-data" /> &nbsp;
                     <label for="ignore-external-data" class="form-check-label">Ignore data source</label>
                 </div>
+                <div class="form-check-row">
+                    <input type="checkbox" v-model="showOtherCurrencies" id="show-other-currencies" /> &nbsp;
+                    <label for="show-other-currencies" class="form-check-label">Show other currencies</label>
+                </div>
             </div>
            
         </fieldset>
@@ -266,7 +271,7 @@ onMounted(() => {
 
         <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', false]"></BTClock>
     </div>
-    <div class="preview-container">
+    <div class="preview-container" v-if="showOtherCurrencies">
         <BTClock :data="currentPriceOther.EUR" method="parsePriceData" :params="[CURRENCY_EUR, false]"></BTClock>
         <BTClock :data="currentPriceOther.EUR" method="parseSatsPerCurrency" :params="[CURRENCY_EUR, false]"></BTClock>
 
