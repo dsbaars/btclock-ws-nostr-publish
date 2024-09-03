@@ -18,6 +18,7 @@ export class CoinbasePriceSource extends WsPriceSource {
 
         ws.on('message', (data) => {
             const message = JSON.parse(data.toString());
+            console.log("Coinbase msg", message);
 
             if (message.type === 'ticker' && message.product_id === pair) {
 //                console.log(`BTC/USD Price: ${message.price}`);
@@ -27,11 +28,11 @@ export class CoinbasePriceSource extends WsPriceSource {
         });
 
         ws.on('error', (error) => {
-            console.error(`WebSocket error: ${error.message}`);
+            console.error(`Coinbase: WebSocket error: ${error.message}`);
         });
 
         ws.on('close', () => {
-            console.log('WebSocket connection closed');
+            console.log('Coinbase: WebSocket connection closed');
         });
         ws.open();
         super();

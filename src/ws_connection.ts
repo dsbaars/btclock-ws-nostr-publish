@@ -28,7 +28,6 @@ export class WsConnection extends EventEmitter {
         });
 
         this.instance.onclose = ((event) => {
-            console.log(event.code);
             this.onClose();
             this.reconnect();
         });

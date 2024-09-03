@@ -53,8 +53,6 @@ const sub = pool.subscribeMany(relays, [
 let npub = nip19.npubEncode(process.env.NOSTR_PUB)
 nostrTerm.writeln(` < Listening to \x1b[33m${npub}\x1b[0m`);
 
-console.log(npub);
-
 tsParticles.load({
     id: "tsparticles"
 });

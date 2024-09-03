@@ -173,7 +173,6 @@ function connectWebSocket2() {
         const message = { timestamp, data: JSON.stringify(data) };
 
         wsTerminal2.value.writeln(`\x1b[32m${timestamp}\x1b[0m ${cj(message.data, undefined, customColorMap, 0)}`);
-        console.log(data.price);
 
         if (data.price) {
             currentPriceOther.value = data.price;
