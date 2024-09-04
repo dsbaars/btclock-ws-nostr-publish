@@ -95,7 +95,7 @@ export class Ws2Publisher {
         this.currenciesClientMap.get(currency)?.add(client);
         client.send(encoder.encode({ 'msg': `Subscribed to ${currency}` }))
 
-        client.send(encoder.encode({ price: DataStorage.lastPrice.get(currency), pair: currency }));
+        client.send(encoder.encode({ price: { [currency]: DataStorage.lastPrice.get(currency)! }}));
 
     }
 
@@ -119,7 +119,7 @@ export class Ws2Publisher {
             return;
 
         clients.forEach((client) => {
-            client.send(encoder.encode(update));
+            client.send(encoder.encode({ price: {[update.pair]: update.price}}));
         });
     }
 
