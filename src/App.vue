@@ -198,13 +198,13 @@ function connectWebSocket2() {
         wsTerminal2.value.writeln(`\x1b[32m${timestamp}\x1b[0m << ${cj(message.data, undefined, customColorMap, 0)}`);
 
         if (data.price) {
-            currentPriceOther.value[data.pair] = data.price;
+            let currency = Object.keys(data.price)[0];
+            currentPriceOther.value[currency] = data.price[currency];
         }
     }
 }
 
 watch(showOtherCurrencies, async (show) => {
-    console.log(show);
     if (show) {
         socket2.send(encoder.encode({ "type": "subscribe", "eventType": "price", "currencies": ['EUR', 'GBP', 'AUD', 'JPY', 'CAD'] }));
     } else {
