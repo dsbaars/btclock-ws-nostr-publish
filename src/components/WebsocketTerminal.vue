@@ -2,10 +2,12 @@
 import { Terminal } from '@xterm/xterm';
 import { onMounted, ref } from 'vue'
 import { FitAddon } from '@xterm/addon-fit';
+import { WsConnection } from '../ws_connection';
 
-defineProps({
+const props = defineProps({
     componentId: "websocketConnection",
     version: "",
+    socket: null,
 })
 
 const wsTerminal = ref(null);
@@ -25,9 +27,11 @@ const writeln = (data) => {
     term.writeln(data);
 }
 
+
 onMounted(() => {
     term.open(wsTerminal.value);
     fitAddon.fit();
+
 });
 
 defineExpose({

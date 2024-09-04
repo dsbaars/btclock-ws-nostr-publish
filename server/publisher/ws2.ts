@@ -1,41 +1,76 @@
 import WebSocket from 'ws';
 import { DataStorage } from '../storage';
 import EventEmitter from 'node:events';
+import { Encoder, Decoder } from "@msgpack/msgpack";
+import { PriceUpdate } from '../price-sources/ws-price-source';
+
+const encoder = new Encoder();
+const decoder = new Decoder();
 
 export class Ws2Publisher {
     private clients: Map<WebSocket, Set<string>> = new Map();
+    private currenciesClientMap: Map<string, Set<WebSocket>> = new Map();
 
     constructor(emitter: EventEmitter) {
-        emitter.on("newPrice", () => { this.onNewPrice() });
+        emitter.on("newPrice", (update) => { this.onNewPrice(update) });
         emitter.on("newFee", () => { this.onNewFee() });
         emitter.on("newBlock", () => { this.onNewBlock() });
+
+        for (let c of ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD']) {
+            this.currenciesClientMap.set(c, new Set<WebSocket>());
+        }
+
     }
 
     newClient(socket: WebSocket) {
         this.clients.set(socket, new Set());
-        socket.send(JSON.stringify({ "msg": "Welcome" }));
+        socket.send(encoder.encode({ "msg": "Welcome" }));
 
         socket.on('message', msg => {
-            const message = JSON.parse(msg.toString());
-            if (message.type === 'subscribe') {
-                this.subscribe(socket, message.eventType);
-                switch (message.eventType) {
-                    case "price":
-                        socket.send(JSON.stringify({ price: Object.fromEntries(DataStorage.lastPrice) }));
-                        break;
-                    case "blockfee":
-                        socket.send(JSON.stringify({ blockfee: DataStorage.lastMedianFee }));
-                        break;
-                    case "blockheight":
-                        socket.send(JSON.stringify({ blockheight: DataStorage.lastBlock }));
-                        break;
+            try {
+                const message = decoder.decode(msg);
+                if (message.type === 'subscribe') {
+                    this.subscribe(socket, message.eventType);
+                    switch (message.eventType) {
+                        case "price":
+                            if ('currency' in message) {
+                                this.subscribeCurrency(socket, message.currency)
+                            } else if ('currencies' in message) {
+                                message.currencies.forEach(c => {
+                                    this.subscribeCurrency(socket, c)
+                                })
+                            }
+
+                            break;
+                        case "blockfee":
+                            socket.send(encoder.encode({ blockfee: DataStorage.lastMedianFee }));
+                            break;
+                        case "blockheight":
+                            socket.send(encoder.encode({ blockheight: DataStorage.lastBlock }));
+                            break;
+                    }
+                } else if (message.type === 'unsubscribe') {
+                    this.unsubscribe(socket, message.eventType);
+                    if (message.eventType == "price") {
+                        if ('currency' in message) {
+                            this.unsubscribeCurrency(socket, message.currency)
+                        } else if ('currencies' in message) {
+                            message.currencies.forEach(c => {
+                                this.unsubscribeCurrency(socket, c)
+                            })
+                        }
+                    }
                 }
-            } else if (message.type === 'unsubscribe') {
-                this.unsubscribe(socket, message.eventType);
-            }
+            } catch { }
         });
 
         socket.on('close', (code, reason) => {
+            this.currenciesClientMap.forEach((set) => {
+                if (set.has(socket)) {
+                    set.delete(socket);
+                }
+            })
+
             this.clients.delete(socket);
         });
     }
@@ -47,6 +82,29 @@ export class Ws2Publisher {
         }
     }
 
+    subscribeCurrency(client: WebSocket, currency: string) {
+        if (!this.currenciesClientMap.has(currency)) {
+            if (DataStorage.lastPrice.get(currency) != null) {
+                this.currenciesClientMap.set(currency, new Set<WebSocket>());
+            } else {
+                client.send(encoder.encode({ 'error': `${currency} does not exist.` }))
+                return;
+            }
+        }
+
+        this.currenciesClientMap.get(currency)?.add(client);
+        client.send(encoder.encode({ 'msg': `Subscribed to ${currency}` }))
+
+        client.send(encoder.encode({ price: DataStorage.lastPrice.get(currency), pair: currency }));
+
+    }
+
+    unsubscribeCurrency(client: WebSocket, currency: string) {
+        this.currenciesClientMap.get(currency)?.delete(client);
+        client.send(encoder.encode({ 'msg': `Unsubscribed to ${currency}` }))
+    }
+
+
     unsubscribe(client: WebSocket, eventType: string) {
         const subscriptions = this.clients.get(client);
         if (subscriptions) {
@@ -54,13 +112,14 @@ export class Ws2Publisher {
         }
     }
 
-    onNewPrice() {
-        let output = { price: Object.fromEntries(DataStorage.lastPrice) }
+    onNewPrice(update: PriceUpdate) {
+        let clients = this.currenciesClientMap.get(update.pair)
 
-        this.clients.forEach((subscriptions, client) => {
-            if (subscriptions.has("price")) {
-                client.send(JSON.stringify(output));
-            }
+        if (!clients?.size)
+            return;
+
+        clients.forEach((client) => {
+            client.send(encoder.encode(update));
         });
     }
 
@@ -69,7 +128,7 @@ export class Ws2Publisher {
 
         this.clients.forEach((subscriptions, client) => {
             if (subscriptions.has("blockheight")) {
-                client.send(JSON.stringify(output));
+                client.send(encoder.encode(output));
             }
         });
     }
@@ -79,7 +138,7 @@ export class Ws2Publisher {
 
         this.clients.forEach((subscriptions, client) => {
             if (subscriptions.has("blockfee")) {
-                client.send(JSON.stringify(output));
+                client.send(encoder.encode(output));
             }
         });
     }
