@@ -272,7 +272,7 @@ onMounted(() => {
                 <WebsocketTerminal componentId="websocketConnection" :socket="socket1" :version="'v1 (JSON) ' + socket1BytesReceived" ref="wsTerminal"></WebsocketTerminal>
             </div>
             <div id="terminal2Container" class="termContainer">
-                <WebsocketTerminal componentId="websocketConection2" :socket="socket2" :version="'v1 (MsgPack) ' + socket2BytesReceived" ref="wsTerminal2"></WebsocketTerminal>
+                <WebsocketTerminal componentId="websocketConection2" :socket="socket2" :version="'v2 (MsgPack) ' + socket2BytesReceived" ref="wsTerminal2"></WebsocketTerminal>
             </div>
             <div id="nostrContainer" class="termContainer">
                 <NostrTerminal></NostrTerminal>
