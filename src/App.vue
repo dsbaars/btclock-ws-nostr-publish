@@ -37,7 +37,7 @@ const feeRate = ref();
 feeRate.value = 5;
 const currentPrice = ref();
 const currentPriceOther = ref();
-currentPriceOther.value={
+currentPriceOther.value = {
     'EUR': 0,
     'CAD': 0,
     'GBP': 0,
@@ -48,21 +48,16 @@ currentPrice.value = 60000;
 const ignoreDataSource = ref();
 const showOtherCurrencies = ref(false);
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
-
+//const websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
+const websocketUrl1 = websocketProtocol + '//' + window.location.host + '/api/v1/ws';
 const socket1 = new WsConnection(websocketUrl1, 'blob', true);
-const websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
+//const websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
+const websocketUrl2 = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
 const socket2 = new WsConnection(websocketUrl2, 'arraybuffer', true);
 let socket1BytesReceived = 0;
 let socket2BytesReceived = 0;
 
 function connectWebSocket() {
-//     const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-// //    const websocketUrl = websocketProtocol + '//' + window.location.host + '/ws?prices=bitcoin&currency=usd';
-//     const websocketUrl = websocketProtocol + '//localhost:8080/api/v1/ws';
-
-//     const socket = new WsConnection(websocketUrl);
-
     let lastMessages = [];
     let currentBlockHeight = 840000;
     // Event handler for WebSocket open
@@ -103,7 +98,7 @@ function connectWebSocket() {
 
     socket1.open();
 
-  
+
 
     function storeAndDisplayData(data) {
         if (ignoreDataSource.value)
@@ -144,13 +139,6 @@ function connectWebSocket() {
 }
 
 function connectWebSocket2() {
-    const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-//    const websocketUrl = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
-    
-    let lastMessages = [];
-    let currentBlockHeight = 840000;
-    // Event handler for WebSocket open
-
     let isOpen = false;
 
     socket2.on('open', (event) => {
@@ -160,9 +148,9 @@ function connectWebSocket2() {
 
         console.log('WebSocket v2 connection established');
         document.getElementById('websocketConection2_indicator')?.classList.add('online');
-        socket2.send(encoder.encode({ "type": "subscribe", "eventType":  "price", "currencies": ['USD']}));
-        socket2.send(encoder.encode({ "type": "subscribe", "eventType":  "blockheight"}));
-        socket2.send(encoder.encode({ "type": "subscribe", "eventType":  "blockfee"}));
+        socket2.send(encoder.encode({ "type": "subscribe", "eventType": "price", "currencies": ['USD'] }));
+        socket2.send(encoder.encode({ "type": "subscribe", "eventType": "blockheight" }));
+        socket2.send(encoder.encode({ "type": "subscribe", "eventType": "blockfee" }));
 
     })
 
@@ -213,17 +201,14 @@ function connectWebSocket2() {
             currentPriceOther.value[data.pair] = data.price;
         }
     }
-
-
-  
 }
 
-watch(showOtherCurrencies, async(show) => {
+watch(showOtherCurrencies, async (show) => {
     console.log(show);
     if (show) {
-        socket2.send(encoder.encode({ "type": "subscribe", "eventType":  "price", "currencies": ['EUR', 'GBP', 'AUD', 'JPY', 'CAD']}));
+        socket2.send(encoder.encode({ "type": "subscribe", "eventType": "price", "currencies": ['EUR', 'GBP', 'AUD', 'JPY', 'CAD'] }));
     } else {
-        socket2.send(encoder.encode({ "type": "unsubscribe", "eventType":  "price", "currencies": ['EUR', 'GBP', 'AUD', 'JPY', 'CAD']}));
+        socket2.send(encoder.encode({ "type": "unsubscribe", "eventType": "price", "currencies": ['EUR', 'GBP', 'AUD', 'JPY', 'CAD'] }));
     }
 })
 
@@ -263,16 +248,18 @@ onMounted(() => {
                     <label for="show-other-currencies" class="form-check-label">Show other currencies</label>
                 </div>
             </div>
-           
+
         </fieldset>
     </form>
     <div class="container-fluid">
         <div class="row">
             <div id="terminalContainer" class="termContainer">
-                <WebsocketTerminal componentId="websocketConnection" :socket="socket1" :version="'v1 (JSON) ' + socket1BytesReceived" ref="wsTerminal"></WebsocketTerminal>
+                <WebsocketTerminal componentId="websocketConnection" :socket="socket1"
+                    :version="'v1 (JSON) ' + socket1BytesReceived" ref="wsTerminal"></WebsocketTerminal>
             </div>
             <div id="terminal2Container" class="termContainer">
-                <WebsocketTerminal componentId="websocketConection2" :socket="socket2" :version="'v2 (MsgPack) ' + socket2BytesReceived" ref="wsTerminal2"></WebsocketTerminal>
+                <WebsocketTerminal componentId="websocketConection2" :socket="socket2"
+                    :version="'v2 (MsgPack) ' + socket2BytesReceived" ref="wsTerminal2"></WebsocketTerminal>
             </div>
             <div id="nostrContainer" class="termContainer">
                 <NostrTerminal></NostrTerminal>
