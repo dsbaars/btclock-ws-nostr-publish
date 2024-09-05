@@ -29,19 +29,19 @@ export class OwnPriceSource extends WsPriceSource {
     }
 
     lastPrices = {
-        kraken: 0,
-        gemini: 0,
-        coinbase: 0,
-        bitfinex: 0,
-        bitflyer: 0
+        // kraken: 0,
+        // gemini: 0,
+        // coinbase: 0,
+        // bitfinex: 0,
+        // bitflyer: 0
     }
 
     lastUpdates = {
-        kraken: 0,
-        gemini: 0,
-        coinbase: 0,
-        bitfinex: 0,
-        bitflyer: 0
+        // kraken: 0,
+        // gemini: 0,
+        // coinbase: 0,
+        // bitfinex: 0,
+        // bitflyer: 0
     }
 
     lastAvgPrice = 0;
@@ -69,6 +69,10 @@ export class OwnPriceSource extends WsPriceSource {
             })
 
         }
+    }
+
+    public getLastPrices() {
+        return this.lastPrices;
     }
 
     private emitNewValue() {

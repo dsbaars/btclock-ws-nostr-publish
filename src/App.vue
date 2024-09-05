@@ -48,11 +48,11 @@ currentPrice.value = 60000;
 const ignoreDataSource = ref();
 const showOtherCurrencies = ref(false);
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-//const websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
-const websocketUrl1 = websocketProtocol + '//' + window.location.host + '/api/v1/ws';
+const websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
+//const websocketUrl1 = websocketProtocol + '//' + window.location.host + '/api/v1/ws';
 const socket1 = new WsConnection(websocketUrl1, 'blob', true);
-//const websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
-const websocketUrl2 = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
+const websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
+//const websocketUrl2 = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
 const socket2 = new WsConnection(websocketUrl2, 'arraybuffer', true);
 let socket1BytesReceived = 0;
 let socket2BytesReceived = 0;
@@ -270,18 +270,23 @@ onMounted(() => {
     <div class="preview-container" v-if="showOtherCurrencies">
         <BTClock :data="currentPriceOther.EUR" method="parsePriceData" :params="[CURRENCY_EUR, false]"></BTClock>
         <BTClock :data="currentPriceOther.EUR" method="parseSatsPerCurrency" :params="[CURRENCY_EUR, false]"></BTClock>
+        <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.EUR, CURRENCY_EUR, false]"></BTClock>
 
         <BTClock :data="currentPriceOther.GBP" method="parsePriceData" :params="[CURRENCY_GBP, false]"></BTClock>
         <BTClock :data="currentPriceOther.GBP" method="parseSatsPerCurrency" :params="[CURRENCY_GBP, false]"></BTClock>
+        <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.GBP, CURRENCY_GBP, false]"></BTClock>
 
         <BTClock :data="currentPriceOther.JPY" method="parsePriceData" :params="[CURRENCY_JPY, false]"></BTClock>
         <BTClock :data="currentPriceOther.JPY" method="parseSatsPerCurrency" :params="[CURRENCY_JPY, false]"></BTClock>
+        <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.JPY, CURRENCY_JPY, false]"></BTClock>
 
         <BTClock :data="currentPriceOther.AUD" method="parsePriceData" :params="[CURRENCY_AUD, false]"></BTClock>
         <BTClock :data="currentPriceOther.AUD" method="parseSatsPerCurrency" :params="[CURRENCY_AUD, false]"></BTClock>
+        <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.AUD, CURRENCY_AUD, false]"></BTClock>
 
         <BTClock :data="currentPriceOther.CAD" method="parsePriceData" :params="[CURRENCY_CAD, false]"></BTClock>
         <BTClock :data="currentPriceOther.CAD" method="parseSatsPerCurrency" :params="[CURRENCY_CAD, false]"></BTClock>
+        <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.CAD, CURRENCY_CAD, false]"></BTClock>
 
     </div>
     <div class="preview-container">

@@ -41,7 +41,7 @@ let ws1Publisher = new Ws1Publisher(emitter);
 let ws2Publisher = new Ws2Publisher(emitter);
 
 try {
-    DataStorage.lastPrice = new Map<string,string>();
+    DataStorage.lastPrice = new Map<string, string>();
     DataStorage.lastBlock = await blocks.getBlocksTipHeight();
     DataStorage.lastMedianFee = (await fees.getFeesMempoolBlocks())[0].medianFee;
 } catch (e) {
@@ -52,7 +52,7 @@ try {
     exit(1);
 }
 
-const handlePriceUpdate = async(update: PriceUpdate) => {
+const handlePriceUpdate = async (update: PriceUpdate) => {
     let source = useOwnPriceData ? "median" : "coinCapWs";
     DataStorage.lastPrice.set(update.pair, update.price);
 
@@ -64,12 +64,13 @@ const handlePriceUpdate = async(update: PriceUpdate) => {
         lastPublish = await nostrPublisher.nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
             ["medianFee", String(DataStorage.lastMedianFee)],
             ["block", String(DataStorage.lastBlock)],
-        ]) || lastPublish;      
-    }  
+        ]) || lastPublish;
+    }
 }
 
 let lastPublish: number;
-let usdPriceSource:WsPriceSource;
+let usdPriceSource: WsPriceSource;
+let priceSources = new Map<string, WsPriceSource>();
 
 // eurPriceSource = new OwnPriceSource(logger, 'EUR', DataConfig.eurSources);
 
@@ -77,10 +78,12 @@ if (useOwnPriceData) {
     let logger = mainLogger.child({ module: "ownPriceSource" })
 
     usdPriceSource = new OwnPriceSource(logger, 'USD', DataConfig.usdSources);
+    priceSources.set('USD', usdPriceSource);
 
     for (let cur of ['EUR', 'JPY', 'GBP', 'CAD', 'SGD', 'CHF', 'AUD']) {
         let newCur = new OwnPriceSource(logger, cur, DataConfig.eurSources);
         newCur.on('priceUpdate', handlePriceUpdate)
+        priceSources.set(cur, newCur);
     }
 
 } else {
@@ -106,7 +109,7 @@ const initMempool = async () => {
     ws.addEventListener("open", (event) => {
         logger.info(`Mempool Websocket to ${process.env.MEMPOOL_INSTANCE} open`);
     });
-    ws.addEventListener("message", async ({data}) => {
+    ws.addEventListener("message", async ({ data }) => {
         const res = JSON.parse(data.toString());
 
         if (res.block) {
@@ -138,7 +141,7 @@ const initMempool = async () => {
             //     ["source", "mempoolWS"]
             // ];
             // // ndkEvent.content = String(res.block.height);
-            
+
 
             // if (publishToNostr) {
             //     // await ndkEvent.publish().then(e => {
@@ -176,8 +179,8 @@ await server.register(websocket);
 
 server.register(fastifyStatic, {
     root: path.join(path.dirname(url.fileURLToPath(import.meta.url)), 'public')
-  })
-  
+})
+
 server.get('/', async (request, reply) => {
     const htmlFilePath = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '/public/index.html');
     const htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
@@ -197,10 +200,23 @@ server.get('/api/lastprice', async (request, reply) => {
     reply.type('application/json').send(Object.fromEntries(DataStorage.lastPrice));
 });
 
+
+server.get('/api/debugprice', async (request, reply) => {
+    const lastPrices = Object.fromEntries(
+        Array.from(priceSources.entries()).map(([key, source]) => [key, source.getLastPrices()])
+      );
+      
+    reply.type('application/json').send(lastPrices);
+});
+
+
 server.get('/api/lastfee', async (request, reply) => {
     reply.type('application/json').send(DataStorage.lastMedianFee);
 });
 
+server.get('/api/v2/currencies', async (request, reply) => {
+    reply.type('application/json').send(Array.from(DataStorage.lastPrice.keys()));
+});
 
 
 server.get('/ws', { websocket: true }, (connection, req) => {
@@ -212,7 +228,7 @@ server.get('/api/v1/ws', { websocket: true }, (connection, req) => {
 })
 
 server.get('/api/v2/ws', { websocket: true }, (connection, req) => {
-    ws2Publisher.newClient(connection.socket);  
+    ws2Publisher.newClient(connection.socket);
 });
 // await server.vite.ready()
 
