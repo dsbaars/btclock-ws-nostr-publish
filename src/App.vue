@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import BTClock from './components/BTClock.vue'
 import NostrTerminal from './components/NostrTerminal.vue'
 import WebsocketTerminal from './components/WebsocketTerminal.vue'
@@ -48,11 +48,18 @@ currentPrice.value = 60000;
 const ignoreDataSource = ref();
 const showOtherCurrencies = ref(false);
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
-//const websocketUrl1 = websocketProtocol + '//' + window.location.host + '/api/v1/ws';
+let websocketUrl1: string;
+let websocketUrl2: string;
+
+if (import.meta.env.DEV) {
+    websocketUrl1 = websocketProtocol + '//localhost:8080/api/v1/ws';
+    websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
+} else {
+    websocketUrl1 = websocketProtocol + '//' + window.location.host + '/api/v1/ws';
+    websocketUrl2 = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
+}
+
 const socket1 = new WsConnection(websocketUrl1, 'blob', true);
-const websocketUrl2 = websocketProtocol + '//localhost:8080/api/v2/ws';
-//const websocketUrl2 = websocketProtocol + '//' + window.location.host + '/api/v2/ws';
 const socket2 = new WsConnection(websocketUrl2, 'arraybuffer', true);
 let socket1BytesReceived = 0;
 let socket2BytesReceived = 0;
