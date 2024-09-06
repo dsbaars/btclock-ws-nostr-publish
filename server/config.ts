@@ -28,7 +28,7 @@ const NostrConfig =  {
 
 let krakenMultiCurrency = new KrakenPriceSource('BTC/USD');
 //let coinbaseMultiCurrency = new CoinbasePriceSource('BTC/USD');
-let bitflyerMultiCurrency = new BitflyerPriceSource();
+//let bitflyerMultiCurrency = new BitflyerPriceSource();
 let geminiMultiCurrency = new GeminiPriceSource();
 
 type DataConfigType = {
@@ -43,13 +43,13 @@ const DataConfig:DataConfigType = {
         gemini: geminiMultiCurrency,
      //   coinbase: coinbaseMultiCurrency,
         bitfinex: new BitfinexPriceSource(),
-        bitflyer: bitflyerMultiCurrency,
+ //       bitflyer: bitflyerMultiCurrency,
     },
     eurSources: {
         kraken: krakenMultiCurrency,
         gemini: geminiMultiCurrency,
        // coinbase: coinbaseMultiCurrency,
-        bitflyer: bitflyerMultiCurrency,
+//        bitflyer: bitflyerMultiCurrency,
         // bitfinex: new BitfinexPriceSource(),
         // bitflyer: new BitflyerPriceSource(),
     },

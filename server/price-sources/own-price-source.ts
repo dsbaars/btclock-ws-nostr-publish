@@ -75,6 +75,10 @@ export class OwnPriceSource extends WsPriceSource {
         return this.lastPrices;
     }
 
+    public getLastUpdates() {
+        return this.lastUpdates;
+    }
+
     private emitNewValue() {
         let validValues = 0;
         let timeDiffs = {}

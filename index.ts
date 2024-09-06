@@ -203,11 +203,20 @@ server.get('/api/lastprice', async (request, reply) => {
 
 server.get('/api/debugprice', async (request, reply) => {
     const lastPrices = Object.fromEntries(
-        Array.from(priceSources.entries()).map(([key, source]) => [key, source.getLastPrices()])
+        Array.from(priceSources.entries()).map(([key, source]) => [key, (source as OwnPriceSource).getLastPrices()])
       );
       
     reply.type('application/json').send(lastPrices);
 });
+
+server.get('/api/debugupdates', async (request, reply) => {
+    const lastPrices = Object.fromEntries(
+        Array.from(priceSources.entries()).map(([key, source]) => [key, (source as OwnPriceSource).getLastUpdates()])
+      );
+      
+    reply.type('application/json').send(lastPrices);
+});
+
 
 
 server.get('/api/lastfee', async (request, reply) => {
