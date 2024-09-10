@@ -13,7 +13,7 @@ import * as url from 'url';
 import * as os from 'os';
 
 import { exit } from "process";
-import { CoincapPriceSource } from "./server/price-sources/coincap-ws";
+//import { CoincapPriceSource } from "./server/price-sources/coincap-ws";
 import { OwnPriceSource } from "./server/price-sources/own-price-source";
 import { PriceUpdate, WsPriceSource } from "./server/price-sources/ws-price-source";
 import { DataStorage } from "./server/storage";
@@ -89,7 +89,8 @@ if (useOwnPriceData) {
 } else {
     let logger = mainLogger.child({ module: "coincapPriceSource" })
 
-    usdPriceSource = new CoincapPriceSource(logger);
+    exit("Coincap price source non working");
+//    usdPriceSource = new CoincapPriceSource(logger);
 }
 
 
