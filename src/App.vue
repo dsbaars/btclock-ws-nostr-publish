@@ -303,8 +303,11 @@ onMounted(() => {
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[false]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPrice, '$', false]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPrice, '$', true]"></BTClock>
-        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true]"></BTClock>
-        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', false]"></BTClock>
+        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, false, true]"></BTClock>
+        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, false, false]"></BTClock>
+        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', false, false, false]"></BTClock>
+        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, true, false]"></BTClock>
+        <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, true, true]"></BTClock>
         <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', false]"></BTClock>
     </div>
 
