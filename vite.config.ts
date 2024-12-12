@@ -25,6 +25,10 @@ export default defineConfig(({ command, mode }) => {
                     {
                         src: 'js/*',
                         dest: 'js'
+                    },
+                    {
+                        src: 'fonts/*',
+                        dest: 'fonts'
                     }
                 ]
             }),

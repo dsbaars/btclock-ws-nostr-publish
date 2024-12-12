@@ -71,7 +71,9 @@ function getCurrencySymbol(input: string): string {
                     {{ part }}
                 </div>
             </div>
-            <div v-else-if="c.length >= 3" class="mediumText">{{ c }}</div>
+            <div v-else-if="c.length >= 3 && c == 'STS'" class="digit sats">S</div>
+
+            <div v-else-if="c.length >= 3" class="mediumText">{{ getCurrencySymbol(c) }}</div>
             <div v-else-if="c === ' ' || c === ''" class="mediumText">&nbsp;</div>
 
             <div class="digit" v-else>{{ getCurrencySymbol(c) }}</div>

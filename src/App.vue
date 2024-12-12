@@ -47,6 +47,7 @@ currentPriceOther.value = {
 currentPrice.value = 60000;
 const ignoreDataSource = ref();
 const showOtherCurrencies = ref(false);
+const showSatsSymbol = ref(false);
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 let websocketUrl1: string;
 let websocketUrl2: string;
@@ -233,26 +234,35 @@ onMounted(() => {
 
         <fieldset>
             <div class="data-form">
-                <div class="control">
-                    <label for="data-price">Price</label>
-                    <input type="number" id="data-price" v-model="currentPrice" min="0" placeholder="Price" />
+                <div class="row">
+                    <div class="control">
+                        <label for="data-price">Price</label>
+                        <input type="number" id="data-price" v-model="currentPrice" min="0" placeholder="Price" />
+                    </div>
+                    <div class="control">
+                        <label for="data-blockHeight">Block Height</label>
+                        <input type="number" id="data-blockHeight" v-model="blockHeight" min="0"
+                            placeholder="Block Height" />
+                    </div>
+                    <div class="control">
+                        <label for="data-feeRate">Fee Rate</label>
+                        <input type="number" id="data-feeRate" v-model="feeRate" min="0" placeholder="Fee Rate" />
+                    </div>
                 </div>
+                <div class="row">
+
                 <div class="control">
-                    <label for="data-blockHeight">Block Height</label>
-                    <input type="number" id="data-blockHeight" v-model="blockHeight" min="0"
-                        placeholder="Block Height" />
-                </div>
-                <div class="control">
-                    <label for="data-feeRate">Fee Rate</label>
-                    <input type="number" id="data-feeRate" v-model="feeRate" min="0" placeholder="Fee Rate" />
-                </div>
-                <div class="form-check-row">
                     <input type="checkbox" v-model="ignoreDataSource" id="ignore-external-data" /> &nbsp;
                     <label for="ignore-external-data" class="form-check-label">Ignore data source</label>
                 </div>
-                <div class="form-check-row">
+                <div class="control">
                     <input type="checkbox" v-model="showOtherCurrencies" id="show-other-currencies" /> &nbsp;
                     <label for="show-other-currencies" class="form-check-label">Show other currencies</label>
+                </div>
+                <div class="control">
+                    <input type="checkbox" v-model="showSatsSymbol" id="show-sats-symbol" /> &nbsp;
+                    <label for="show-sats-symbol" class="form-check-label">Show sats symbol</label>
+                </div>
                 </div>
             </div>
 
@@ -262,11 +272,11 @@ onMounted(() => {
         <div class="row">
             <div id="terminalContainer" class="termContainer">
                 <WebsocketTerminal componentId="websocketConnection" :socket="socket1"
-                    :version="'v1 (JSON) ' + socket1BytesReceived" ref="wsTerminal"></WebsocketTerminal>
+                    :version="'v1 (JSON) '" ref="wsTerminal"></WebsocketTerminal>
             </div>
             <div id="terminal2Container" class="termContainer">
                 <WebsocketTerminal componentId="websocketConection2" :socket="socket2"
-                    :version="'v2 (MsgPack) ' + socket2BytesReceived" ref="wsTerminal2"></WebsocketTerminal>
+                    :version="'v2 (MsgPack) '" ref="wsTerminal2"></WebsocketTerminal>
             </div>
             <div id="nostrContainer" class="termContainer">
                 <NostrTerminal></NostrTerminal>
@@ -275,24 +285,24 @@ onMounted(() => {
 
     </div>
     <div class="preview-container" v-if="showOtherCurrencies">
-        <BTClock :data="currentPriceOther.EUR" method="parsePriceData" :params="[CURRENCY_EUR, false]"></BTClock>
-        <BTClock :data="currentPriceOther.EUR" method="parseSatsPerCurrency" :params="[CURRENCY_EUR, false]"></BTClock>
+        <BTClock :data="currentPriceOther.EUR" method="parsePriceData" :params="[CURRENCY_EUR, false, false, false]"></BTClock>
+        <BTClock :data="currentPriceOther.EUR" method="parseSatsPerCurrency" :params="[CURRENCY_EUR, showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.EUR, CURRENCY_EUR, false]"></BTClock>
 
-        <BTClock :data="currentPriceOther.GBP" method="parsePriceData" :params="[CURRENCY_GBP, false]"></BTClock>
-        <BTClock :data="currentPriceOther.GBP" method="parseSatsPerCurrency" :params="[CURRENCY_GBP, false]"></BTClock>
+        <BTClock :data="currentPriceOther.GBP" method="parsePriceData" :params="[CURRENCY_GBP, false, false, false]"></BTClock>
+        <BTClock :data="currentPriceOther.GBP" method="parseSatsPerCurrency" :params="[CURRENCY_GBP, showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.GBP, CURRENCY_GBP, false]"></BTClock>
 
-        <BTClock :data="currentPriceOther.JPY" method="parsePriceData" :params="[CURRENCY_JPY, false]"></BTClock>
-        <BTClock :data="currentPriceOther.JPY" method="parseSatsPerCurrency" :params="[CURRENCY_JPY, false]"></BTClock>
+        <BTClock :data="currentPriceOther.JPY" method="parsePriceData" :params="[CURRENCY_JPY, false, false, false]"></BTClock>
+        <BTClock :data="currentPriceOther.JPY" method="parseSatsPerCurrency" :params="[CURRENCY_JPY, showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.JPY, CURRENCY_JPY, false]"></BTClock>
 
-        <BTClock :data="currentPriceOther.AUD" method="parsePriceData" :params="[CURRENCY_AUD, false]"></BTClock>
-        <BTClock :data="currentPriceOther.AUD" method="parseSatsPerCurrency" :params="[CURRENCY_AUD, false]"></BTClock>
+        <BTClock :data="currentPriceOther.AUD" method="parsePriceData" :params="[CURRENCY_AUD, false, false, false]"></BTClock>
+        <BTClock :data="currentPriceOther.AUD" method="parseSatsPerCurrency" :params="[CURRENCY_AUD, showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.AUD, CURRENCY_AUD, false]"></BTClock>
 
-        <BTClock :data="currentPriceOther.CAD" method="parsePriceData" :params="[CURRENCY_CAD, false]"></BTClock>
-        <BTClock :data="currentPriceOther.CAD" method="parseSatsPerCurrency" :params="[CURRENCY_CAD, false]"></BTClock>
+        <BTClock :data="currentPriceOther.CAD" method="parsePriceData" :params="[CURRENCY_CAD, false, false, false]"></BTClock>
+        <BTClock :data="currentPriceOther.CAD" method="parseSatsPerCurrency" :params="[CURRENCY_CAD, showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPriceOther.CAD, CURRENCY_CAD, false]"></BTClock>
 
     </div>
@@ -301,6 +311,7 @@ onMounted(() => {
         <BTClock :data="feeRate" method="parseBlockFees"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[true]"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[false]"></BTClock>
+        <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', showSatsSymbol]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPrice, '$', false]"></BTClock>
         <BTClock :data="blockHeight" method="parseMarketCap" :params="[currentPrice, '$', true]"></BTClock>
         <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, false, true]"></BTClock>
@@ -308,7 +319,6 @@ onMounted(() => {
         <BTClock :data="currentPrice" method="parsePriceData" :params="['$', false, false, false]"></BTClock>
         <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, true, false]"></BTClock>
         <BTClock :data="currentPrice" method="parsePriceData" :params="['$', true, true, true]"></BTClock>
-        <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', false]"></BTClock>
     </div>
 
 

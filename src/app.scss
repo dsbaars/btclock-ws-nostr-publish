@@ -10,6 +10,8 @@
 @import "@xterm/xterm/css/xterm.css";
 @import "purecss/build/forms.css";
 
+@import './satsymbol';
+
 //@import "purecss/build/grids-core.css";
 //@import "purecss/build/grids-units.css";
 //@import "purecss/build/pure.css";
@@ -27,6 +29,10 @@ $font-family-sans-serif:      Ubuntu, -apple-system, BlinkMacSystemFont, "Segoe 
 // *:not(.terminal *):not(.btclock *) {
 //     font-family: "Ubuntu", sans-serif;
 // }
+
+$btclock-bg-color: #fff;
+$btclock-text-color: #000;
+
 
 pre {
     white-space: pre-wrap;
@@ -67,7 +73,7 @@ pre {
 
 @include media-breakpoint-up(xl) {
     .btclock {
-        max-width: 33.3%;
+     //   max-width: 33.3%;
     }
   }
 
@@ -101,17 +107,20 @@ pre {
 .splitText,
 .mediumText {
     border: 2px solid gold;
+    outline: 1px solid #000;
+    outline-offset: -2px;
     border-radius: 8px;
-    min-width: 50px;
+    min-width: 51px;
     margin: 5px;
     text-align: center;
-    color: #fff;
+    color: $btclock-text-color;
+    background-color: $btclock-bg-color;
 }
 
 .digit {
-    font-size: 4rem;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    font-size: 3rem;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
 }
 
 .splitText div:first-child::after {
@@ -123,15 +132,15 @@ pre {
 }
 
 .mediumText {
-    font-size: 2rem;
+    font-size: 1.5rem;
     padding-left: 5px;
     padding-right: 5px;
-    padding-top: 29px !important;
-    padding-bottom: 29px !important;
+    padding-top: 23px !important;
+    padding-bottom: 23px !important;
 }
 
 .splitText {
-    font-size: 1.2rem;
+    font-size: 0.8rem;
     padding-top: 19px !important;
     padding-bottom: 20px !important;
 
@@ -144,10 +153,10 @@ pre {
 .mediumText {
     border: 2px solid gold;
     border-radius: 8px;
-    min-width: 40px;
+    min-width: 60px;
     margin: 5px;
     text-align: center;
-    color: #fff;
+    color: $btclock-text-color;
 }
 
     .digit {
@@ -189,12 +198,12 @@ pre {
 @media (min-width: 1024px) {
     .preview-container {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         flex-wrap: wrap;
-        justify-content: flex-start;
-        align-items: stretch;
-        align-content: stretch;
-        max-height: 45rem;
+        justify-content:space-around;
+        align-items: center;
+        align-content: center;
+        // max-height: 45rem;
         // max-width: 100%;
         margin: 0 auto;
     }
@@ -296,4 +305,10 @@ h1,
     input[type="checkbox"] {
         @extend .form-check-input;
     }
+}
+
+.sats {
+	font-family: 'Satoshi Symbol';
+    padding-top: 10px !important;
+    padding-bottom: 0px !important;
 }
