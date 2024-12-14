@@ -34,6 +34,7 @@
     "esrun": "^3.2.26",
     "fastify": "^4.25.1",
     "nostr-tools": "^2.5.2",
+    "popper.js": "^1.16.1",
     "purecss": "^3.0.0",
     "svelte": "^4.2.16",
     "toastify": "^2.0.1",

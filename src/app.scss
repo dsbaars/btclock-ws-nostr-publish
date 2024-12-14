@@ -8,7 +8,6 @@
 
 @import "@fontsource/oswald/latin-400";
 @import "@xterm/xterm/css/xterm.css";
-@import "purecss/build/forms.css";
 
 @import './satsymbol';
 
@@ -153,8 +152,8 @@ pre {
 .mediumText {
     border: 2px solid gold;
     border-radius: 8px;
-    min-width: 60px;
-    margin: 5px;
+    min-width: 42px;
+    margin: 4px;
     text-align: center;
     color: $btclock-text-color;
 }
@@ -166,9 +165,9 @@ pre {
     }
 
     .splitText {
-        font-size: 0.8rem;
-        padding-top: 14px !important;
-        padding-bottom: 13px !important;
+        font-size: 0.65rem;
+        padding-top: 17px !important;
+        padding-bottom: 16px !important;
     
         text-align: center;
     }

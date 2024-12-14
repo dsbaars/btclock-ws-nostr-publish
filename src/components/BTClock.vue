@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { inject, ref, onMounted, watch } from 'vue'
+import { inject, ref, onMounted, watch, useTemplateRef } from 'vue'
 import { CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY, CURRENCY_AUD, CURRENCY_CAD, CURRENCY_USD } from '../constants';
+import { Tooltip } from 'bootstrap'
 
 const Module = inject('Module')
 
@@ -11,6 +12,10 @@ const props = defineProps({
         type: Array,
         default: () => []
     },
+    title: {
+        type: String,
+        required: false
+    } 
 })
 
 let characters = ref();
@@ -31,9 +36,19 @@ const updateDisplay = () => {
     }
 }
 
+const component = useTemplateRef('component')
+
+
 watch(props, updateDisplay);
 onMounted(() => {
     updateDisplay()
+
+    if (props.title && props.title.length) {
+        new Tooltip(component.value)
+
+        // if (tooltipTriggerList)
+        //     Array.from(tooltipTriggerList).map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl))
+    }
 });
 
 const isSplitText = (str: string) => {
@@ -64,7 +79,9 @@ function getCurrencySymbol(input: string): string {
 </script>
 
 <template>
-    <div class="btclock">
+    <small class="d-block d-md-none text-center">{{ props.title }}</small>
+    <div class="btclock" data-bs-toggle="tooltip" data-bs-placement="top"
+        :data-bs-title="props.title ? props.title : ''" ref="component">
         <template v-for="c in characters">
             <div v-if="isSplitText(c)" class="splitText">
                 <div class="flex-items" v-for="part in c.split('/')">
