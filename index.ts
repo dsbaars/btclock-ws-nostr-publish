@@ -14,15 +14,15 @@ import * as os from 'os';
 
 import { exit } from "process";
 //import { CoincapPriceSource } from "./server/price-sources/coincap-ws";
-import { OwnPriceSource } from "./server/price-sources/own-price-source";
-import { PriceUpdate, WsPriceSource } from "./server/price-sources/ws-price-source";
-import { DataStorage } from "./server/storage";
-import { Ws1Publisher } from "./server/publisher/ws1";
-import mainLogger from './server/logger';
-import { Ws2Publisher } from "./server/publisher/ws2";
+import { OwnPriceSource } from "./server/price-sources/own-price-source.js";
+import { PriceUpdate, WsPriceSource } from "./server/price-sources/ws-price-source.js";
+import { DataStorage } from "./server/storage.js";
+import { Ws1Publisher } from "./server/publisher/ws1.js";
+import mainLogger from './server/logger.js';
+import { Ws2Publisher } from "./server/publisher/ws2.js";
 import EventEmitter from 'node:events';
-import { DataConfig } from "./server/config";
-import { NostrPublisher } from "./server/publisher/nostr";
+import { DataConfig } from "./server/config.js";
+// import { NostrPublisher } from "./server/publisher/nostr.js";
 
 const logger = mainLogger.child({ module: "fastify" })
 const { bitcoin: { blocks, fees } } = mempoolJS({
@@ -33,9 +33,9 @@ let useOwnPriceData: boolean = process.env.OWN_PRICE_DATA === "true" ? true : fa
 
 let emitter = new EventEmitter();
 
-let nostrPublisher = new NostrPublisher();
+// let nostrPublisher = new NostrPublisher();
 
-nostrPublisher.connect();
+// nostrPublisher.connect();
 
 let ws1Publisher = new Ws1Publisher(emitter);
 let ws2Publisher = new Ws2Publisher(emitter);
@@ -61,10 +61,10 @@ const handlePriceUpdate = async (update: PriceUpdate) => {
     if (update.pair == "USD") {
         let currentDate = Date.now();
         if (currentDate / 1000 - lastPublish < 15) return;
-        lastPublish = await nostrPublisher.nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
-            ["medianFee", String(DataStorage.lastMedianFee)],
-            ["block", String(DataStorage.lastBlock)],
-        ]) || lastPublish;
+        // lastPublish = await nostrPublisher.nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
+        //     ["medianFee", String(DataStorage.lastMedianFee)],
+        //     ["block", String(DataStorage.lastBlock)],
+        // ]) || lastPublish;
     }
 }
 
@@ -89,14 +89,14 @@ if (useOwnPriceData) {
 } else {
     let logger = mainLogger.child({ module: "coincapPriceSource" })
 
-    exit("Coincap price source non working");
+   // exit("Coincap price source non working");
 //    usdPriceSource = new CoincapPriceSource(logger);
 }
 
 
 
-
-usdPriceSource.on('priceUpdate', handlePriceUpdate)
+if (usdPriceSource)
+    usdPriceSource.on('priceUpdate', handlePriceUpdate)
 
 const initMempool = async () => {
 
@@ -119,7 +119,7 @@ const initMempool = async () => {
             expire.setMinutes(expire.getMinutes() + 240);
 
 
-            nostrPublisher.nostrPublishBlockEvent(res.block.height, "mempoolWs");
+            // nostrPublisher.nostrPublishBlockEvent(res.block.height, "mempoolWs");
             DataStorage.lastBlock = res.block.height;
             emitter.emit("newBlock");
 
