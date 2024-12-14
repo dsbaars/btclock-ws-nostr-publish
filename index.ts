@@ -74,29 +74,22 @@ let priceSources = new Map<string, WsPriceSource>();
 
 // eurPriceSource = new OwnPriceSource(logger, 'EUR', DataConfig.eurSources);
 
-if (useOwnPriceData) {
-    let logger = mainLogger.child({ module: "ownPriceSource" })
 
-    usdPriceSource = new OwnPriceSource(logger, 'USD', DataConfig.usdSources);
-    priceSources.set('USD', usdPriceSource);
+let ownLogger = mainLogger.child({ module: "ownPriceSource" })
 
-    for (let cur of ['EUR', 'JPY', 'GBP', 'CAD', 'SGD', 'CHF', 'AUD']) {
-        let newCur = new OwnPriceSource(logger, cur, DataConfig.eurSources);
-        newCur.on('priceUpdate', handlePriceUpdate)
-        priceSources.set(cur, newCur);
-    }
+usdPriceSource = new OwnPriceSource(ownLogger, 'USD', DataConfig.usdSources);
+priceSources.set('USD', usdPriceSource);
 
-} else {
-    let logger = mainLogger.child({ module: "coincapPriceSource" })
-
-   // exit("Coincap price source non working");
-//    usdPriceSource = new CoincapPriceSource(logger);
+for (let cur of ['EUR', 'JPY', 'GBP', 'CAD', 'SGD', 'CHF', 'AUD']) {
+    let newCur = new OwnPriceSource(ownLogger, cur, DataConfig.eurSources);
+    newCur.on('priceUpdate', handlePriceUpdate)
+    priceSources.set(cur, newCur);
 }
 
 
 
-if (usdPriceSource)
-    usdPriceSource.on('priceUpdate', handlePriceUpdate)
+
+usdPriceSource.on('priceUpdate', handlePriceUpdate)
 
 const initMempool = async () => {
 
