@@ -13,7 +13,7 @@ import { WsConnection } from "./ws_connection";
 
 const pool = new SimplePool()
 
-let relays = ['wss://nostr1.daedaluslabs.io', 'wss://nostr2.daedaluslabs.io', 'wss://nostr3.daedaluslabs.io', 'wss://nostr.dbtc.link'];
+let relays = ['wss://nostr.dbtc.link'];
 
 
 var nostrTerm = new Terminal({

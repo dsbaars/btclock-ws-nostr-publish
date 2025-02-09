@@ -26,9 +26,9 @@ export class NostrPublisher {
         this.ndk = new NDK({
             explicitRelayUrls: [
                 "wss://nostr.dbtc.link",
-                "wss://nostr1.daedaluslabs.io",
-                "wss://nostr2.daedaluslabs.io",
-                "wss://nostr3.daedaluslabs.io",
+                // "wss://nostr1.daedaluslabs.io",
+                // "wss://nostr2.daedaluslabs.io",
+                // "wss://nostr3.daedaluslabs.io",
                 // "wss://pablof7z.nostr1.com",
                 // "wss://offchain.pub",
                 // "wss://relay.f7z.io",
@@ -47,9 +47,10 @@ export class NostrPublisher {
         });
 
         this.relaySet = NDKRelaySet.fromRelayUrls([
-            "wss://nostr1.daedaluslabs.io",
-            "wss://nostr2.daedaluslabs.io",
-            "wss://nostr3.daedaluslabs.io",
+            "wss://nostr.dbtc.link",
+            // "wss://nostr1.daedaluslabs.io",
+            // "wss://nostr2.daedaluslabs.io",
+            // "wss://nostr3.daedaluslabs.io",
         ], this.ndk, true);
 
         this.ndk.pool?.on("relay:connecting", (relay) => {

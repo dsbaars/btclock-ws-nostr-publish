@@ -17,7 +17,7 @@ const customColorMap = {
     white: '\x1b[38;2;219;223;244m'
 };
 
-let relays = ['wss://nostr1.daedaluslabs.io', 'wss://nostr2.daedaluslabs.io', 'wss://nostr3.daedaluslabs.io', 'wss://nostr.dbtc.link'];
+let relays = ['wss://nostr.dbtc.link'];
 let nostrTerm = new Terminal({
     disableStdin: true,
     scrollback: 10,
