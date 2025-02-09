@@ -44,8 +44,8 @@ const sub = pool.subscribeMany(relays, [
             return;
         }
 
-        const eventData = `{ "type": "${msgType}", "content": ${event.content}}`;
-        nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
+        const eventData = `{ "type": "${msgType}", "content": ${event.content}, "block": "${event.tags.find((v) => { return v[0] === 'block'; })[1]}", "fee": "${event.tags.find((v) => { return v[0] === 'medianFee'; })[1]}"}`;
+        nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
     },
     oneose() {
         console.log('EOSE');
