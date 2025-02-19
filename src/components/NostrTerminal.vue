@@ -31,21 +31,25 @@ nostrTerm.loadAddon(fitAddon);
 
 const sub = pool.subscribeMany(relays, [
     {
-        kinds: [1],
+        kinds: [12203],
         authors: [process.env.NOSTR_PUB],
     },
 ], {
     onevent(event) {
         const msgType = event.tags.find((v) => { return v[0] === 'type'; })[1];
-
         if (msgType === "priceUsd" && new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
             return;
         } else if (new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
             return;
         }
 
-        const eventData = `{ "type": "${msgType}", "content": ${event.content}, "block": "${event.tags.find((v) => { return v[0] === 'block'; })[1]}", "fee": "${event.tags.find((v) => { return v[0] === 'medianFee'; })[1]}"}`;
-        nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
+        if (msgType === "priceUsd") {
+            const eventData = `{ "type": "${msgType}", "content": ${event.content}, "block": "${event.tags.find((v) => { return v[0] === 'block'; })[1]}", "fee": "${event.tags.find((v) => { return v[0] === 'medianFee'; })[1]}"}`;
+            nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
+        } else {
+            const eventData = `{ "type": "${msgType}", "content": ${event.content}}`;
+            nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
+        }
     },
     oneose() {
         console.log('EOSE');
