@@ -13,7 +13,7 @@ import { WsConnection } from "./ws_connection";
 
 const pool = new SimplePool()
 
-let relays = ['wss://nostr.dbtc.link'];
+let relays = ['wss://nostr.dbtc.link', 'wss://relay.primal.net'];
 
 
 var nostrTerm = new Terminal({
