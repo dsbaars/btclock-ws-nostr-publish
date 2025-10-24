@@ -134,7 +134,7 @@ function connectWebSocket() {
         } else if (data['bitcoin']) {
             currentPrice.value = data['bitcoin'];
         } else if (data["mempool-blocks"]) {
-            feeRate.value = data["mempool-blocks"][0].medianFee;
+            //feeRate.value = data["mempool-blocks"][0].medianFee;
         }
 
         const timestamp = new Date().toLocaleTimeString();
@@ -208,6 +208,10 @@ function connectWebSocket2() {
         if (data.price) {
             let currency = Object.keys(data.price)[0];
             currentPriceOther.value[currency] = data.price[currency];
+        }
+
+        if (data.blockfee2) {
+            feeRate.value = data.blockfee2;
         }
     }
 }
