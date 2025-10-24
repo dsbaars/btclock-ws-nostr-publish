@@ -5,6 +5,7 @@ import { PriceUpdate } from '../price-sources/ws-price-source';
 
 export class Ws1Publisher {
     protected clients: Set<WebSocket> = new Set();
+    protected lastRoundFee: Number;
 
     constructor(emitter: EventEmitter) {
         this.clients = new Set();
@@ -15,6 +16,7 @@ export class Ws1Publisher {
         });
         emitter.on("newFee", () => { this.onNewFee() });
         emitter.on("newBlock", () => { this.onNewBlock() });
+        this.lastRoundFee = 0;
     }
 
     newClient(socket: WebSocket) {
@@ -46,10 +48,16 @@ export class Ws1Publisher {
     }
 
     onNewFee() {
+        if (this.lastRoundFee == Math.round(DataStorage.lastMedianFee)) {
+            return
+        }
+
         let output = { "mempool-blocks": [{ "medianFee": Math.round(DataStorage.lastMedianFee) }] };
 
         for (const client of this.clients) {
             client.send(JSON.stringify(output));
         }
+
+        this.lastRoundFee = Math.round(DataStorage.lastMedianFee);
     }
 }

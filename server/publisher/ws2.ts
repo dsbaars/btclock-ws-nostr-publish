@@ -10,6 +10,7 @@ const decoder = new Decoder();
 export class Ws2Publisher {
     private clients: Map<WebSocket, Set<string>> = new Map();
     private currenciesClientMap: Map<string, Set<WebSocket>> = new Map();
+    protected lastRoundFee: Number;
 
     constructor(emitter: EventEmitter) {
         emitter.on("newPrice", (update) => { this.onNewPrice(update) });
@@ -19,6 +20,8 @@ export class Ws2Publisher {
         for (let c of ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD']) {
             this.currenciesClientMap.set(c, new Set<WebSocket>());
         }
+
+        this.lastRoundFee = 0;
 
     }
 
@@ -137,15 +140,19 @@ export class Ws2Publisher {
     }
 
     onNewFee() {
-        let output = { blockfee: Math.round(DataStorage.lastMedianFee) };
 
-        let output2 = { blockfee2: Math.round(DataStorage.lastMedianFee * 100) / 100 };
+        if (this.lastRoundFee != Math.round(DataStorage.lastMedianFee)) {
+            let output = { blockfee: Math.round(DataStorage.lastMedianFee) };
 
-        this.clients.forEach((subscriptions, client) => {
-            if (subscriptions.has("blockfee")) {
-                client.send(encoder.encode(output));
-            }
-        });
+            this.clients.forEach((subscriptions, client) => {
+                if (subscriptions.has("blockfee")) {
+                    client.send(encoder.encode(output));
+                }
+            });
+            this.lastRoundFee = Math.round(DataStorage.lastMedianFee)
+        }
+
+        let output2 = { blockfee2: Math.round(DataStorage.lastMedianFee * 100) / 100 };       
 
         this.clients.forEach((subscriptions, client) => {
             if (subscriptions.has("blockfee2")) {
