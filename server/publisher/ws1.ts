@@ -22,7 +22,7 @@ export class Ws1Publisher {
 
         socket.send(JSON.stringify({ "bitcoin": DataStorage.lastPrice.get("USD") }));
         socket.send(JSON.stringify({ "block": { "height": DataStorage.lastBlock } }));
-        socket.send(JSON.stringify({ "mempool-blocks": [{ "medianFee": DataStorage.lastMedianFee }] }));
+        socket.send(JSON.stringify({ "mempool-blocks": [{ "medianFee": Math.round(DataStorage.lastMedianFee) }] }));
 
         socket.on('close', (code, reason) => {
             this.clients.delete(socket);
@@ -46,7 +46,7 @@ export class Ws1Publisher {
     }
 
     onNewFee() {
-        let output = { "mempool-blocks": [{ "medianFee": DataStorage.lastMedianFee }] };
+        let output = { "mempool-blocks": [{ "medianFee": Math.round(DataStorage.lastMedianFee) }] };
 
         for (const client of this.clients) {
             client.send(JSON.stringify(output));

@@ -159,7 +159,7 @@ function connectWebSocket2() {
         socket2.send(encoder.encode({ "type": "subscribe", "eventType": "price", "currencies": ['USD'] }));
         socket2.send(encoder.encode({ "type": "subscribe", "eventType": "blockheight" }));
         socket2.send(encoder.encode({ "type": "subscribe", "eventType": "blockfee" }));
-
+        socket2.send(encoder.encode({ "type": "subscribe", "eventType": "blockfee2" }));
     })
 
     socket2.on('send', (event) => {
@@ -341,7 +341,7 @@ onMounted(() => {
     </div>
     <div class="preview-container">
         <BTClock :data="blockHeight" method="parseBlockHeight" title="Block Height"></BTClock>
-        <BTClock :data="feeRate" method="parseBlockFees" title="Fee Rate"></BTClock>
+        <BTClock :data="feeRate" method="parseBlockFees" title="Fee Rate (rounded)"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[true]" title="Halving Countdown (Blocks)"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[false]" title="Halving Countdown (Date)"></BTClock>
         <BTClock :data="currentPrice" method="parseSatsPerCurrency" :params="['$', showSatsSymbol]" title="Sats per Currency"></BTClock>

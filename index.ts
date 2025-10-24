@@ -120,7 +120,12 @@ const initMempool = async () => {
             let currentDate = Date.now();
             // let expire = new Date(currentDate);
 
-            if (Math.round(res["mempool-blocks"][0].medianFee) == DataStorage.lastMedianFee)
+            if (
+                (res["mempool-blocks"][0].medianFee >= 10 &&
+                Math.round(res["mempool-blocks"][0].medianFee) == DataStorage.lastMedianFee)    
+                ||
+                (res["mempool-blocks"][0].medianFee < 10 &&
+                    Math.round(res["mempool-blocks"][0].medianFee * 100) / 100 == DataStorage.lastMedianFee))
                 return;
 
             // expire.setMinutes(expire.getMinutes() + 5);
@@ -146,8 +151,12 @@ const initMempool = async () => {
             // else {
             //     logger.info("Nostr publishing disabled, not publishing fee update", ndkEvent.rawEvent());
             // }
-
-            DataStorage.lastMedianFee = Math.round(res["mempool-blocks"][0].medianFee);
+            if (res["mempool-blocks"][0].medianFee < 10) {
+                DataStorage.lastMedianFee = Math.round(res["mempool-blocks"][0].medianFee * 100) / 100;
+            }
+            else {
+                DataStorage.lastMedianFee = Math.round(res["mempool-blocks"][0].medianFee);
+            }
             emitter.emit("newFee");
         }
 

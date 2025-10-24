@@ -255,14 +255,14 @@ function connectWebSocket() {
 
             });
         } else if (data["mempool-blocks"]) {
-            let feeRate = Module.parseBlockFees(data["mempool-blocks"][0].medianFee);
-            let container = document.getElementById('feeRate');
+            // let feeRate = Module.parseBlockFees(data["mempool-blocks"][0].medianFee);
+            // let container = document.getElementById('feeRate');
 
-            container.innerHTML = '';
-            feeRate.forEach((v) => {
-                populateContainer(v, container);
+            // container.innerHTML = '';
+            // feeRate.forEach((v) => {
+            //     populateContainer(v, container);
 
-            });
+            // });
         }
 
         const timestamp = new Date().toLocaleString();
