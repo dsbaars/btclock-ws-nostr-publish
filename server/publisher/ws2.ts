@@ -43,7 +43,10 @@ export class Ws2Publisher {
 
                             break;
                         case "blockfee":
-                            socket.send(encoder.encode({ blockfee: DataStorage.lastMedianFee }));
+                            socket.send(encoder.encode({ blockfee: Math.round(DataStorage.lastMedianFee) }));
+                            break;
+                        case "blockfee2":
+                            socket.send(encoder.encode({ blockfee2: DataStorage.lastMedianFee }));
                             break;
                         case "blockheight":
                             socket.send(encoder.encode({ blockheight: DataStorage.lastBlock }));
@@ -134,11 +137,19 @@ export class Ws2Publisher {
     }
 
     onNewFee() {
-        let output = { blockfee: DataStorage.lastMedianFee };
+        let output = { blockfee: Math.round(DataStorage.lastMedianFee) };
+
+        let output2 = { blockfee2: Math.round(DataStorage.lastMedianFee * 100) / 100 };
 
         this.clients.forEach((subscriptions, client) => {
             if (subscriptions.has("blockfee")) {
                 client.send(encoder.encode(output));
+            }
+        });
+
+        this.clients.forEach((subscriptions, client) => {
+            if (subscriptions.has("blockfee2")) {
+                client.send(encoder.encode(output2));
             }
         });
     }
