@@ -345,8 +345,8 @@ onMounted(() => {
     </div>
     <div class="preview-container">
         <BTClock :data="blockHeight" method="parseBlockHeight" title="Block Height"></BTClock>
-        <BTClock :data="blockHeight" method="parseBitcoinSupply" :params="[true]"  title="BTC Supply"></BTClock>
-        <BTClock :data="blockHeight" method="parseBitcoinSupply" :params="[false]"  title="BTC Supply"></BTClock>
+        <BTClock :data="blockHeight" method="parseBitcoinSupply" :params="[true, false]"  title="BTC Supply (absolute)"></BTClock>
+        <BTClock :data="blockHeight" method="parseBitcoinSupply" :params="[true, true]"  title="BTC Supply (percentage) "></BTClock>
         <BTClock :data="feeRate" method="parseBlockFees" title="Fee Rate (rounded)"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[true]" title="Halving Countdown (Blocks)"></BTClock>
         <BTClock :data="blockHeight" method="parseHalvingCountdown" :params="[false]" title="Halving Countdown (Date)"></BTClock>
