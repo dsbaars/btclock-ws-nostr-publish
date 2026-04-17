@@ -61,13 +61,11 @@
   "resolutions": {
     "axios": "^1.15.0",
     "esbuild": ">=0.25.3",
-    "devalue": "^5.6.4",
     "brace-expansion": "^2.0.2",
     "follow-redirects": "^1.16.0",
     "immutable": "^5.1.5",
     "rollup": "^4.59.0",
     "serialize-javascript": "^7.0.5",
-    "@fastify/static/glob/minimatch": "^9.0.7",
     "zeromq/shelljs/glob/minimatch": "^3.1.4",
     "**/picomatch": "^4.0.4"
   }
