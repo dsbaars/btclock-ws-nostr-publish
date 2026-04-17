@@ -30,7 +30,7 @@ export default defineConfig(({ command, mode }) => {
                     }
                 ]
             }),
-            EnvironmentPlugin({'NOSTR_PUB': env.NOSTR_PUB}),
+            EnvironmentPlugin({'NOSTR_PUB': env.NOSTR_PUB ?? ''}),
         ],
         root,
         // define: {
