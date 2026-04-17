@@ -5,6 +5,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # Runtime stays on the current Node LTS (24). Block @types/node major
+    # bumps so it doesn't drift to 25 while the Docker base is still on 24.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       npm-security:
         applies-to: security-updates
@@ -19,6 +24,11 @@ updates:
     directory: '/docker'
     schedule:
       interval: weekly
+    # Pin to the current Node LTS line. Drop this rule when the next LTS
+    # (Node 26, releases Oct 2026) is what we want to move to.
+    ignore:
+      - dependency-name: 'node'
+        update-types: ['version-update:semver-major']
     groups:
       docker:
         patterns:
