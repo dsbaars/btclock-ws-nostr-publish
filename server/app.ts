@@ -79,16 +79,16 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
         reply.type('application/json').send(Array.from(DataStorage.lastPrice.keys()))
     })
 
-    server.get('/ws', { websocket: true }, (connection, req) => {
-        deps.ws1Publisher.newClient(connection.socket)
+    server.get('/ws', { websocket: true }, (socket, req) => {
+        deps.ws1Publisher.newClient(socket)
     })
 
-    server.get('/api/v1/ws', { websocket: true }, (connection, req) => {
-        deps.ws1Publisher.newClient(connection.socket)
+    server.get('/api/v1/ws', { websocket: true }, (socket, req) => {
+        deps.ws1Publisher.newClient(socket)
     })
 
-    server.get('/api/v2/ws', { websocket: true }, (connection, req) => {
-        deps.ws2Publisher.newClient(connection.socket)
+    server.get('/api/v2/ws', { websocket: true }, (socket, req) => {
+        deps.ws2Publisher.newClient(socket)
     })
 
     return server
