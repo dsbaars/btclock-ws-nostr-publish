@@ -1,0 +1,166 @@
+@import 'tailwindcss';
+@plugin "daisyui";
+
+@import '@fontsource/antonio/latin-400.css';
+@import '@fontsource/ubuntu/latin-400.css';
+@import '@fontsource/ubuntu/latin-700.css';
+@import '@fontsource/ubuntu-mono/latin-400.css';
+@import '@fontsource/oswald/latin-400.css';
+@import '@xterm/xterm/css/xterm.css';
+
+@font-face {
+    font-family: 'Satoshi Symbol';
+    src:
+        url('/fonts/Satoshi_Symbol.woff2') format('woff2'),
+        url('/fonts/Satoshi_Symbol.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    --font-sans: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Ubuntu Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* BTClock widget — preserved exactly from the old SCSS so the preview matches. */
+.btclock {
+    border: 1px solid darkgray;
+    background: #000;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    align-content: stretch;
+    font-family: 'Antonio', sans-serif;
+}
+
+.btclock * {
+    font-family: 'Oswald', sans-serif;
+}
+
+.btclock > div {
+    padding: 5px;
+}
+
+.btclock .digit,
+.btclock .splitText,
+.btclock .mediumText {
+    border: 2px solid gold;
+    outline: 1px solid #000;
+    outline-offset: -2px;
+    border-radius: 8px;
+    min-width: 51px;
+    margin: 5px;
+    text-align: center;
+    color: #000;
+    background-color: #fff;
+}
+
+.btclock .digit {
+    font-size: 3rem;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.btclock .splitText {
+    font-size: 0.8rem;
+    padding-top: 19px;
+    padding-bottom: 20px;
+}
+
+.btclock .splitText div:first-child::after {
+    display: block;
+    content: '';
+    margin-top: 0;
+    border-bottom: 2px solid;
+    margin-bottom: 3px;
+}
+
+.btclock .mediumText {
+    font-size: 1.5rem;
+    padding: 23px 5px;
+}
+
+.btclock .sats {
+    font-family: 'Satoshi Symbol';
+    padding-top: 10px;
+    padding-bottom: 0;
+}
+
+@media (max-width: 767.98px) {
+    .btclock .digit,
+    .btclock .splitText,
+    .btclock .mediumText {
+        min-width: 42px;
+        margin: 4px;
+    }
+    .btclock .digit {
+        font-size: 2.5rem;
+    }
+    .btclock .splitText {
+        font-size: 0.65rem;
+        padding-top: 17px;
+        padding-bottom: 16px;
+    }
+    .btclock .mediumText {
+        font-size: 1rem;
+    }
+}
+
+.preview-container {
+    margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .preview-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        align-content: center;
+    }
+}
+
+/* Online indicator (replaces bootstrap-era markup). */
+.online-indicator {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 10px;
+    background-color: red;
+    border-radius: 50%;
+    position: relative;
+}
+
+.online-indicator.online {
+    background-color: #0fcc45;
+}
+
+.online-indicator .blink {
+    display: block;
+    width: 15px;
+    height: 15px;
+    background-color: inherit;
+    opacity: 0.7;
+    border-radius: 50%;
+    animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+    100% {
+        transform: scale(2, 2);
+        opacity: 0;
+    }
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Ubuntu Mono', sans-serif;
+}

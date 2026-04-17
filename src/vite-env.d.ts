@@ -3,8 +3,8 @@
 interface ImportMetaEnv {
     readonly NOSTR_PUB: string
     // more env variables...
-  }
-  
-  interface ImportMeta {
+}
+
+interface ImportMeta {
     readonly env: ImportMetaEnv
-  }
+}
