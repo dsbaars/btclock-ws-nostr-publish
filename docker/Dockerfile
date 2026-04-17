@@ -1,5 +1,5 @@
 # Use the official Node.js image as base
-FROM node:22
+FROM node:24
 
 # Install necessary build tools and libraries
 RUN apt-get update && \
