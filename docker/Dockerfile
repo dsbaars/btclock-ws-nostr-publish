@@ -1,12 +1,13 @@
-# Use the official Node.js image as base
 FROM node:24
 
-# Install necessary build tools and libraries
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
     libzmq3-dev \
     cmake
 
-# Set working directory
+# Node 24 ships corepack; enable it so the `packageManager` field in
+# package.json pins the project's pnpm version.
+RUN corepack enable
+
 WORKDIR /app

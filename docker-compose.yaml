@@ -6,4 +6,4 @@ services:
     working_dir: /usr/src/app
     build:
       context: docker
-    command: yarn tsx index.ts
+    command: pnpm exec tsx index.ts
