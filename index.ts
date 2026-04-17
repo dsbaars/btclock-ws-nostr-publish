@@ -1,5 +1,3 @@
-import 'websocket-polyfill'
-
 import EventEmitter from 'node:events'
 import { exit } from 'process'
 
