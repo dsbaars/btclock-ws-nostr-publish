@@ -1,72 +1,70 @@
-<script setup>
-import { Terminal } from '@xterm/xterm';
-import { onMounted } from 'vue'
-import { SimplePool, nip19 } from "nostr-tools";
-import { FitAddon } from '@xterm/addon-fit';
-import cj from 'color-json';
+<script setup lang="ts">
+import { Terminal } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import { SimplePool, nip19 } from 'nostr-tools'
+import { colorizeJson, timestamp } from '../terminal-log'
 
+const relays = ['wss://nostr.dbtc.link']
 const pool = new SimplePool()
-const customColorMap = {
-    black: '\x1b[38;2;0;0;0m',
-    red: '\x1b[38;2;249;133;123m',
-    green: '\x1b[38;2;163;238;160m',
-    yellow: '\x1b[38;2;209;154;102m',
-    blue: '\x1b[36m',
-    magenta: '\x1b[38;2;209;200;102m',
-    cyan: '\x1b[38;2;75;167;239m',
-    white: '\x1b[38;2;219;223;244m'
-};
+const termEl = useTemplateRef<HTMLDivElement>('termEl')
 
-let relays = ['wss://nostr.dbtc.link'];
-let nostrTerm = new Terminal({
+const term = new Terminal({
     disableStdin: true,
     scrollback: 10,
     rows: 10,
     cols: 200,
-    fontFamily: '"Ubuntu Mono", courier-new, courier, monospace, "Powerline Extra Symbols"'
-});
-
-const fitAddon = new FitAddon();
-nostrTerm.loadAddon(fitAddon);
-
-const sub = pool.subscribeMany(relays, [
-    {
-        kinds: [12203],
-        authors: [process.env.NOSTR_PUB],
-    },
-], {
-    onevent(event) {
-        const msgType = event.tags.find((v) => { return v[0] === 'type'; })[1];
-        if (msgType === "priceUsd" && new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
-            return;
-        } else if (new Date(event.created_at * 1000) < new Date(Date.now() - 5000 * 60)) {
-            return;
-        }
-
-        if (msgType === "priceUsd") {
-            const eventData = `{ "type": "${msgType}", "content": ${event.content}, "block": "${event.tags.find((v) => { return v[0] === 'block'; })[1]}", "fee": "${event.tags.find((v) => { return v[0] === 'medianFee'; })[1]}"}`;
-            nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
-        } else {
-            const eventData = `{ "type": "${msgType}", "content": ${event.content}}`;
-            nostrTerm.writeln(` > \x1b[32m${new Date(event.created_at * 1000).toLocaleTimeString()}\x1b[0m ${cj(eventData, undefined, customColorMap, 0)}`);
-        }
-    },
-    oneose() {
-        console.log('EOSE');
-    }
+    fontFamily: '"Ubuntu Mono", courier-new, courier, monospace, "Powerline Extra Symbols"',
 })
+const fit = new FitAddon()
+term.loadAddon(fit)
 
-
-let npub = nip19.npubEncode(process.env.NOSTR_PUB)
-nostrTerm.writeln(` < Listening to \x1b[33m${npub}\x1b[0m`);
+const FIVE_MINUTES_MS = 5 * 60 * 1000
+let sub: { close: () => void } | null = null
 
 onMounted(() => {
-    nostrTerm.open(document.getElementById('nostrTerminal'));
-    fitAddon.fit();
-});
+    if (termEl.value) {
+        term.open(termEl.value)
+        fit.fit()
+    }
+
+    const pubkey = process.env.NOSTR_PUB
+    if (!pubkey) {
+        term.writeln(' < NOSTR_PUB not configured, Nostr feed disabled.')
+        return
+    }
+
+    term.writeln(` < Listening to \x1b[33m${nip19.npubEncode(pubkey)}\x1b[0m`)
+
+    sub = pool.subscribeMany(relays, [{ kinds: [12203], authors: [pubkey] }], {
+        onevent(event) {
+            const msgType = event.tags.find((v) => v[0] === 'type')?.[1]
+            if (!msgType) return
+            if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
+
+            const payload: Record<string, unknown> = { type: msgType, content: event.content }
+            if (msgType === 'priceUsd') {
+                payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
+                payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
+            }
+            const ts = new Date(event.created_at * 1000).toLocaleTimeString()
+            term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
+        },
+        oneose() {
+            console.log('EOSE')
+        },
+    })
+})
+
+onBeforeUnmount(() => {
+    sub?.close()
+    term.dispose()
+})
 </script>
 
 <template>
-    <h5>Nostr Data</h5>
-    <div id="nostrTerminal" class="terminal"></div>
+    <section class="w-full lg:basis-1/3 lg:max-w-[33.333%] px-2">
+        <h5 class="font-semibold">Nostr Data</h5>
+        <div ref="termEl" class="terminal"></div>
+    </section>
 </template>

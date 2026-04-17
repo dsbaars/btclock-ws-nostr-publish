@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
-import './app.scss';
+import './app.css'
 
 import App from './App.vue'
 
-let app = createApp(App);
-app.provide('Module', Module);
+const app = createApp(App)
+app.provide('Module', (globalThis as any).Module)
 app.mount('#app')
