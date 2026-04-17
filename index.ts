@@ -27,17 +27,15 @@ DataStorage.lastPrice = new Map<string, string>()
 try {
     await bootstrapMempool({ emitter, logger, hostname: mempoolHostname })
 } catch (e) {
-    if (e instanceof Error)
-        logger.error(`Could not get initial mempool information: ${e.message}`)
-    else
-        logger.error(`Unknown error occured when trying to get initial mempool information`)
+    if (e instanceof Error) logger.error(`Could not get initial mempool information: ${e.message}`)
+    else logger.error(`Unknown error occured when trying to get initial mempool information`)
     exit(1)
 }
 
 const ws1Publisher = new Ws1Publisher(emitter)
 const ws2Publisher = new Ws2Publisher(emitter)
 
-let lastPublish: number = 0
+const lastPublish: number = 0
 
 const handlePriceUpdate = async (update: PriceUpdate) => {
     DataStorage.lastPrice.set(update.pair, update.price)
@@ -45,7 +43,7 @@ const handlePriceUpdate = async (update: PriceUpdate) => {
     emitter.emit('newPrice', update)
 
     if (update.pair == 'USD') {
-        let currentDate = Date.now()
+        const currentDate = Date.now()
         if (currentDate / 1000 - lastPublish < 15) return
         // lastPublish = await nostrPublisher.nostrPublishPriceEvent(Number(DataStorage.lastPrice.get(update.pair)), "priceUsd", source, [
         //     ["medianFee", String(DataStorage.lastMedianFee)],

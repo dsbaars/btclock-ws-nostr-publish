@@ -1,11 +1,11 @@
 config:
-  target: "wss://ws.btclock.store/"
+  target: 'wss://ws.btclock.store/'
   phases:
-    - duration: 20  # Test for 20 seconds
+    - duration: 20 # Test for 20 seconds
       arrivalRate: 10 # Every second, add 10 users
       rampTo: 500 # Ramp it up to 100 users over the 20s period
-      name: "Ramping up the load"
+      name: 'Ramping up the load'
 scenarios:
-  - engine: "ws"
+  - engine: 'ws'
     flow:
       - think: 30

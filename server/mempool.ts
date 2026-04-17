@@ -10,13 +10,17 @@ export type MempoolDeps = {
 }
 
 export async function bootstrapMempool(deps: MempoolDeps): Promise<void> {
-    const { bitcoin: { blocks, fees } } = mempoolJS({ hostname: deps.hostname })
+    const {
+        bitcoin: { blocks, fees },
+    } = mempoolJS({ hostname: deps.hostname })
     DataStorage.lastBlock = await blocks.getBlocksTipHeight()
     DataStorage.lastMedianFee = (await fees.getFeesMempoolBlocks())[0].medianFee
 }
 
 export function initMempoolWs(deps: MempoolDeps): void {
-    const { bitcoin: { websocket } } = mempoolJS({ hostname: deps.hostname })
+    const {
+        bitcoin: { websocket },
+    } = mempoolJS({ hostname: deps.hostname })
 
     const ws = websocket.wsInit()
     websocket.wsWantData(ws, ['blocks', 'mempool-blocks'])

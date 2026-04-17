@@ -25,11 +25,9 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
 
     await server.register(websocket)
 
-    const publicDir = deps.publicDir ?? path.join(
-        path.dirname(url.fileURLToPath(import.meta.url)),
-        '..',
-        'public'
-    )
+    const publicDir =
+        deps.publicDir ??
+        path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'public')
 
     server.register(fastifyStatic, { root: publicDir })
 

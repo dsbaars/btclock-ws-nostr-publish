@@ -1,10 +1,10 @@
-import { BitfinexPriceSource } from "./bitfinex-ws";
-import { BitflyerPriceSource } from "./bitflyer-ws";
-import { CoinbasePriceSource } from "./coinbase-ws";
-import { GeminiPriceSource } from "./gemini-ws";
-import { KrakenPriceSource } from "./kraken-ws";
+import { BitfinexPriceSource } from './bitfinex-ws'
+import { BitflyerPriceSource } from './bitflyer-ws'
+import { CoinbasePriceSource } from './coinbase-ws'
+import { GeminiPriceSource } from './gemini-ws'
+import { KrakenPriceSource } from './kraken-ws'
 
-import { PriceUpdate, WsPriceSource } from "./ws-price-source";
+import { PriceUpdate, WsPriceSource } from './ws-price-source'
 
 import pino from 'pino'
 
@@ -44,78 +44,81 @@ export class OwnPriceSource extends WsPriceSource {
         // bitflyer: 0
     }
 
-    lastAvgPrice = 0;
+    lastAvgPrice = 0
 
-    logger: pino.Logger;
-    protected pair: string;
+    logger: pino.Logger
+    protected pair: string
 
-    constructor(logger: pino.Logger, pair: string = "USD", sources: { [key: string]: WsPriceSource }) {
-        super();
-        this.sources = sources;
+    constructor(
+        logger: pino.Logger,
+        pair: string = 'USD',
+        sources: { [key: string]: WsPriceSource }
+    ) {
+        super()
+        this.sources = sources
 
-        this.logger = logger;
-        this.pair = pair;
+        this.logger = logger
+        this.pair = pair
 
-        for (let item of Object.keys(this.sources)) {
+        for (const item of Object.keys(this.sources)) {
             this.sources[item].on('priceUpdate', (data: PriceUpdate) => {
                 if (data.pair != pair) {
-                    return;
+                    return
                 }
 
-                this.lastPrices[item as keyof typeof this.sources] = parseFloat(data.price);
-                this.lastUpdates[item as keyof typeof this.sources] = new Date().getMilliseconds();
+                this.lastPrices[item as keyof typeof this.sources] = parseFloat(data.price)
+                this.lastUpdates[item as keyof typeof this.sources] = new Date().getMilliseconds()
 
-                this.emitNewValue();
+                this.emitNewValue()
             })
-
         }
     }
 
     public getLastPrices() {
-        return this.lastPrices;
+        return this.lastPrices
     }
 
     public getLastUpdates() {
-        return this.lastUpdates;
+        return this.lastUpdates
     }
 
     private emitNewValue() {
-        let validValues = 0;
-        let timeDiffs = {}
+        let validValues = 0
+        const timeDiffs = {}
 
         const filteredData = Object.values(this.lastPrices).filter((num: number) => {
-            if (num == 0)
-                return false
+            if (num == 0) return false
 
-            validValues++;
-            return true;
-        }, 0);
+            validValues++
+            return true
+        }, 0)
 
-        let avgPrice = Math.round(this.removeOutliersAndCalculateAverage(filteredData, 50));
+        const avgPrice = Math.round(this.removeOutliersAndCalculateAverage(filteredData, 50))
 
         if (avgPrice != this.lastAvgPrice && Math.abs(this.lastAvgPrice - avgPrice) > 2) {
-            this.logger.debug(`Average price ${this.pair} ${avgPrice} from ${validValues} sources`);
-            this.emit('priceUpdate', { price: avgPrice, pair: this.pair });
+            this.logger.debug(`Average price ${this.pair} ${avgPrice} from ${validValues} sources`)
+            this.emit('priceUpdate', { price: avgPrice, pair: this.pair })
             this.lastAvgPrice = avgPrice
         }
     }
 
     removeOutliersAndCalculateAverage(data: number[], threshold: number): number {
         // Calculate mean and standard deviation
-        const mean = data.reduce((acc, val) => acc + val, 0) / data.length;
-        const standardDeviation = Math.sqrt(data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / data.length);
+        const mean = data.reduce((acc, val) => acc + val, 0) / data.length
+        const standardDeviation = Math.sqrt(
+            data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / data.length
+        )
 
         // Define the upper and lower bounds for outliers
-        const upperBound = mean + threshold * standardDeviation;
-        const lowerBound = mean - threshold * standardDeviation;
+        const upperBound = mean + threshold * standardDeviation
+        const lowerBound = mean - threshold * standardDeviation
 
         // Filter out outliers
-        const filteredData = data.filter(val => val >= lowerBound && val <= upperBound);
+        const filteredData = data.filter((val) => val >= lowerBound && val <= upperBound)
 
         // Calculate the average of filtered data
-        const average = filteredData.reduce((acc, val) => acc + val, 0) / filteredData.length;
+        const average = filteredData.reduce((acc, val) => acc + val, 0) / filteredData.length
 
-        return average;
+        return average
     }
-
 }
