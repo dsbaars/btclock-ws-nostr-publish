@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
@@ -9,26 +9,26 @@ updates:
       npm-security:
         applies-to: security-updates
         patterns:
-          - "*"
+          - '*'
       npm-versions:
         applies-to: version-updates
         patterns:
-          - "*"
+          - '*'
 
   - package-ecosystem: docker
-    directory: "/docker"
+    directory: '/docker'
     schedule:
       interval: weekly
     groups:
       docker:
         patterns:
-          - "*"
+          - '*'
 
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
     groups:
       actions:
         patterns:
-          - "*"
+          - '*'

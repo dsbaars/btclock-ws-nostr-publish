@@ -1,10 +1,10 @@
-import { BitfinexPriceSource } from "./bitfinex-ws";
-import { BitflyerPriceSource } from "./bitflyer-ws";
-import { CoinbasePriceSource } from "./coinbase-ws";
-import { GeminiPriceSource } from "./gemini-ws";
-import { KrakenPriceSource } from "./kraken-ws";
+import { BitfinexPriceSource } from './bitfinex-ws'
+import { BitflyerPriceSource } from './bitflyer-ws'
+import { CoinbasePriceSource } from './coinbase-ws'
+import { GeminiPriceSource } from './gemini-ws'
+import { KrakenPriceSource } from './kraken-ws'
 import pino from 'pino'
-import { OwnPriceSource } from "./own-price-source";
+import { OwnPriceSource } from './own-price-source'
 
 const logger = pino({
     name: 'WsPriceSources',
@@ -12,14 +12,13 @@ const logger = pino({
     transport: {
         target: 'pino-pretty',
         options: {
-            colorize: true
-          }
+            colorize: true,
+        },
     },
-});
+})
 
-
-const ownSource = new OwnPriceSource();
+const ownSource = new OwnPriceSource()
 
 ownSource.on('priceUpdate', (data) => {
-    logger.info(`Average price ${data}`);
+    logger.info(`Average price ${data}`)
 })

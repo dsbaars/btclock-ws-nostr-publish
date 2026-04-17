@@ -1,10 +1,8 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events'
 
 export type PriceUpdate = {
-    pair: string,
+    pair: string
     price: string
 }
 
-export class WsPriceSource extends EventEmitter {
-
-}
+export class WsPriceSource extends EventEmitter {}
