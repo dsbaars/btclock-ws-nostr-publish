@@ -201,7 +201,7 @@ onMounted(() => {
             <BTClock
                 :data="currentPriceOther[cur.code]"
                 method="parseSatsPerCurrency"
-                :params="[cur.symbol, showSatsSymbol]"
+                :params="[cur.symbol, showSatsSymbol, true]"
             />
             <BTClock
                 :data="blockHeight"
@@ -241,7 +241,7 @@ onMounted(() => {
         <BTClock
             :data="currentPrice"
             method="parseSatsPerCurrency"
-            :params="['$', showSatsSymbol]"
+            :params="['$', showSatsSymbol, true]"
             title="Sats per Currency"
         />
         <BTClock
