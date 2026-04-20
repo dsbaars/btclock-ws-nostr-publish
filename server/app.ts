@@ -18,6 +18,7 @@ export type CreateServerDeps = {
     priceSources: Map<string, WsPriceSource>
     logger: pino.Logger
     publicDir?: string
+    devMode?: boolean
 }
 
 export async function createServer(deps: CreateServerDeps): Promise<FastifyInstance> {
@@ -25,17 +26,51 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
 
     await server.register(websocket)
 
-    const publicDir =
-        deps.publicDir ??
-        path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'public')
+    const isProduction = process.env.NODE_ENV === 'production'
 
-    server.register(fastifyStatic, { root: publicDir })
+    if (deps.devMode && !isProduction) {
+        const { default: middie } = await import('@fastify/middie')
+        // @ts-expect-error: vite's package exports aren't resolved under moduleResolution=node10
+        const { createServer: createViteServer } = await import('vite')
 
-    server.get('/', async (request, reply) => {
-        const htmlFilePath = path.join(publicDir, 'index.html')
-        const htmlContent = fs.readFileSync(htmlFilePath, 'utf8')
-        reply.type('text/html').send(htmlContent)
-    })
+        const vite = await createViteServer({
+            server: { middlewareMode: true },
+            appType: 'custom',
+        })
+
+        await server.register(middie)
+        server.use(vite.middlewares)
+
+        const indexPath = path.resolve(process.cwd(), 'src/index.html')
+        server.setNotFoundHandler(async (request, reply) => {
+            if (request.url.startsWith('/api/') || request.url === '/ws') {
+                reply.code(404).send({ error: 'Not Found' })
+                return
+            }
+            try {
+                const template = await vite.transformIndexHtml(
+                    request.url,
+                    fs.readFileSync(indexPath, 'utf8')
+                )
+                reply.type('text/html').send(template)
+            } catch (e) {
+                vite.ssrFixStacktrace(e as Error)
+                throw e
+            }
+        })
+    } else {
+        const publicDir =
+            deps.publicDir ??
+            path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'public')
+
+        server.register(fastifyStatic, { root: publicDir })
+
+        server.get('/', async (_request, reply) => {
+            const htmlFilePath = path.join(publicDir, 'index.html')
+            const htmlContent = fs.readFileSync(htmlFilePath, 'utf8')
+            reply.type('text/html').send(htmlContent)
+        })
+    }
 
     server.get('/api/lastblock', async (request, reply) => {
         reply.type('application/json').send(DataStorage.lastBlock)

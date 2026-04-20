@@ -26,7 +26,7 @@ pnpm build              # compile the frontend
 pnpm start              # run the webserver (defaults to http://localhost:8080)
 ```
 
-For hot-reloading during development use `pnpm dev`.
+For development, `pnpm dev` starts the Fastify server with `tsx watch` (auto-reloads on server changes) and mounts Vite as middleware so Vue edits get hot module replacement without a rebuild.
 
 ## Configuration
 

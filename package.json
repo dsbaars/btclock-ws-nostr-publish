@@ -7,7 +7,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "vite build --emptyOutDir",
-    "dev": "tsx index.ts --dev",
+    "dev": "tsx watch index.ts --dev",
     "start": "tsx index.ts",
     "test": "vitest run",
     "lint": "eslint .",
@@ -16,6 +16,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@fastify/middie": "^9.3.2",
     "@fastify/static": "^9.1.1",
     "@fastify/websocket": "^11.2.0",
     "@fontsource/antonio": "^5.0.20",
