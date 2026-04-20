@@ -65,7 +65,14 @@ for (const cur of ['EUR', 'JPY', 'GBP', 'CAD', 'SGD', 'CHF', 'AUD']) {
 
 initMempoolWs({ emitter, logger, hostname: mempoolHostname })
 
-const server = await createServer({ ws1Publisher, ws2Publisher, priceSources, logger })
+const devMode = process.argv.includes('--dev')
+const server = await createServer({
+    ws1Publisher,
+    ws2Publisher,
+    priceSources,
+    logger,
+    devMode,
+})
 
 server.listen({ host: '::', port: 8080 }, (err, address) => {
     if (err) {
