@@ -8,21 +8,18 @@ import {
     CURRENCY_JPY,
     CURRENCY_USD,
 } from '../constants'
+import { MODULE_KEY, invokeBTClock, type BTClockCall } from '../btclock_module'
 
-const Module = inject<any>('Module')
+const Module = inject(MODULE_KEY)
 
-const props = defineProps<{
-    method: string
-    data: number
-    params?: unknown[]
-    title?: string
-}>()
+const props = defineProps<BTClockCall & { title?: string }>()
 
 const characters = ref<string[]>([...'LOADING'])
 
 function updateDisplay() {
+    if (!Module) return
     try {
-        const ret = Module?.[props.method]?.(props.data, ...(props.params ?? []))
+        const ret = invokeBTClock(Module, props)
         if (ret) characters.value = [...ret]
     } catch {
         /* Module not yet ready; keep the LOADING placeholder. */
