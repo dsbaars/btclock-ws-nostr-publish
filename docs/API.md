@@ -8,11 +8,11 @@ This server exposes three things:
 
 Interactive playgrounds and machine-readable specs:
 
-| Artifact | Where | Notes |
-| --- | --- | --- |
-| OpenAPI 3.1 (REST) | [`/openapi.json`](http://localhost:8080/openapi.json) | Generated from route schemas in [server/app.ts](../server/app.ts). |
-| Scalar API reference | [`/docs`](http://localhost:8080/docs) | Interactive REST playground. |
-| AsyncAPI 2.6 (WebSockets) | [`docs/asyncapi.yaml`](./asyncapi.yaml) | Paste into [studio.asyncapi.com](https://studio.asyncapi.com) for an interactive view. |
+| Artifact                  | Where                                                 | Notes                                                                                  |
+| ------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| OpenAPI 3.1 (REST)        | [`/openapi.json`](http://localhost:8080/openapi.json) | Generated from route schemas in [server/app.ts](../server/app.ts).                     |
+| Scalar API reference      | [`/docs`](http://localhost:8080/docs)                 | Interactive REST playground.                                                           |
+| AsyncAPI 2.6 (WebSockets) | [`docs/asyncapi.yaml`](./asyncapi.yaml)               | Paste into [studio.asyncapi.com](https://studio.asyncapi.com) for an interactive view. |
 
 > **Note:** `/docs` and `/openapi.json` are only mounted when `NODE_ENV !== 'production'`. In production both routes return 404.
 
@@ -62,15 +62,15 @@ flowchart LR
 
 Full schemas, examples, and a live "Try it" client live in Scalar at [`/docs`](http://localhost:8080/docs). Short index:
 
-| Method | Path | Summary |
-| --- | --- | --- |
-| GET | `/api/lastblock` | Latest block height. |
-| GET | `/api/lastprice` | Map of currency → latest BTC price string. |
-| GET | `/api/lastfee` | Latest median mempool fee (sats/vB, decimal). |
-| GET | `/api/v2/currencies` | List of supported currency codes. |
-| GET | `/api/hostname` | OS hostname of the server process. |
-| GET | `/api/debugprice` | Per-exchange raw prices (before aggregation). |
-| GET | `/api/debugupdates` | Per-exchange last-update timestamps (ms). |
+| Method | Path                 | Summary                                       |
+| ------ | -------------------- | --------------------------------------------- |
+| GET    | `/api/lastblock`     | Latest block height.                          |
+| GET    | `/api/lastprice`     | Map of currency → latest BTC price string.    |
+| GET    | `/api/lastfee`       | Latest median mempool fee (sats/vB, decimal). |
+| GET    | `/api/v2/currencies` | List of supported currency codes.             |
+| GET    | `/api/hostname`      | OS hostname of the server process.            |
+| GET    | `/api/debugprice`    | Per-exchange raw prices (before aggregation). |
+| GET    | `/api/debugupdates`  | Per-exchange last-update timestamps (ms).     |
 
 All endpoints are unauthenticated and return `application/json`.
 
