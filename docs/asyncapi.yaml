@@ -1,0 +1,285 @@
+asyncapi: 2.6.0
+info:
+  title: BTClock WS data source — WebSocket API
+  version: 1.0.0
+  description: |
+    Real-time Bitcoin data streams published by the BTClock data source server.
+
+    Two wire protocols are exposed:
+
+    - **v1 (legacy, JSON)** — broadcast-only. Every connected client receives every
+      USD price update, block, and rounded median fee. Lives at `/ws` and
+      `/api/v1/ws`.
+    - **v2 (MessagePack, subscription-based)** — clients opt into the event types
+      and currencies they care about. Lives at `/api/v2/ws`.
+
+    REST endpoints are documented separately via OpenAPI at `/docs` (dev only).
+servers:
+  local:
+    url: localhost:8080
+    protocol: ws
+    description: Local dev server (also reachable as `wss://` behind a TLS terminator).
+
+defaultContentType: application/json
+
+channels:
+  /ws:
+    description: |
+      Alias for `/api/v1/ws`. Legacy JSON broadcast stream. On connect the server
+      immediately sends the current USD price, block height, and rounded median
+      fee; thereafter it pushes every change.
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+    subscribe:
+      operationId: v1Receive
+      summary: Receive v1 broadcast frames
+      message:
+        oneOf:
+          - $ref: '#/components/messages/V1Price'
+          - $ref: '#/components/messages/V1Block'
+          - $ref: '#/components/messages/V1Fee'
+
+  /api/v1/ws:
+    description: Legacy JSON broadcast stream. See `/ws`.
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+    subscribe:
+      operationId: v1ReceiveAliased
+      summary: Receive v1 broadcast frames
+      message:
+        oneOf:
+          - $ref: '#/components/messages/V1Price'
+          - $ref: '#/components/messages/V1Block'
+          - $ref: '#/components/messages/V1Fee'
+
+  /api/v2/ws:
+    description: |
+      MessagePack subscription stream. All frames are MessagePack-encoded binary.
+
+      On connect the server sends `{ msg: "Welcome" }`. The client must then
+      subscribe to one or more event types (`blockheight`, `blockfee`,
+      `blockfee2`, `price`) to start receiving updates. `price` requires a
+      `currency` or `currencies` parameter; the others take no parameter.
+
+      Each successful subscribe is acknowledged by the server sending the current
+      value of the subscribed event (e.g. `{ blockheight: 870123 }`) so the
+      client can render something without waiting for the next change.
+    bindings:
+      ws:
+        bindingVersion: 0.1.0
+    publish:
+      operationId: v2Send
+      summary: Client → server subscription control
+      message:
+        oneOf:
+          - $ref: '#/components/messages/V2Subscribe'
+          - $ref: '#/components/messages/V2Unsubscribe'
+    subscribe:
+      operationId: v2Receive
+      summary: Server → client events
+      message:
+        oneOf:
+          - $ref: '#/components/messages/V2Welcome'
+          - $ref: '#/components/messages/V2Ack'
+          - $ref: '#/components/messages/V2Error'
+          - $ref: '#/components/messages/V2Price'
+          - $ref: '#/components/messages/V2BlockHeight'
+          - $ref: '#/components/messages/V2BlockFee'
+          - $ref: '#/components/messages/V2BlockFee2'
+
+components:
+  messages:
+    V1Price:
+      name: v1Price
+      title: BTC/USD price
+      summary: Latest USD price. Emitted only when the value changes by >2 sats.
+      contentType: application/json
+      payload:
+        type: object
+        required: [bitcoin]
+        properties:
+          bitcoin:
+            type: string
+            description: Latest BTC/USD price as a decimal string.
+            examples: ['64211.53']
+
+    V1Block:
+      name: v1Block
+      title: New block
+      summary: Emitted on every new confirmed block.
+      contentType: application/json
+      payload:
+        type: object
+        required: [block]
+        properties:
+          block:
+            type: object
+            required: [height]
+            properties:
+              height:
+                type: integer
+                examples: [870123]
+
+    V1Fee:
+      name: v1Fee
+      title: Next-block median fee (rounded)
+      summary: |
+        Emitted only when the rounded median fee changes. Fees <10 sats/vB are
+        rounded to 2 decimals; fees ≥10 sats/vB are rounded to the nearest
+        integer.
+      contentType: application/json
+      payload:
+        type: object
+        required: [mempool-blocks]
+        properties:
+          mempool-blocks:
+            type: array
+            minItems: 1
+            maxItems: 1
+            items:
+              type: object
+              required: [medianFee]
+              properties:
+                medianFee:
+                  type: number
+                  examples: [13]
+
+    V2Subscribe:
+      name: v2Subscribe
+      title: Subscribe
+      summary: Opt into an event type. MessagePack-encoded.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [type, eventType]
+        properties:
+          type:
+            const: subscribe
+          eventType:
+            type: string
+            enum: [blockheight, blockfee, blockfee2, price]
+          currency:
+            type: string
+            description: Required for `price` when subscribing to a single currency.
+            examples: ['USD']
+          currencies:
+            type: array
+            items: { type: string }
+            description: Required for `price` when subscribing to many currencies at once.
+            examples: [['USD', 'EUR']]
+      examples:
+        - name: subscribeBlockHeight
+          payload: { type: subscribe, eventType: blockheight }
+        - name: subscribeUsdPrice
+          payload: { type: subscribe, eventType: price, currency: USD }
+        - name: subscribeMultiPrice
+          payload: { type: subscribe, eventType: price, currencies: [USD, EUR] }
+
+    V2Unsubscribe:
+      name: v2Unsubscribe
+      title: Unsubscribe
+      summary: Opt out of an event type. MessagePack-encoded.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [type, eventType]
+        properties:
+          type:
+            const: unsubscribe
+          eventType:
+            type: string
+            enum: [blockheight, blockfee, blockfee2, price]
+          currency:
+            type: string
+          currencies:
+            type: array
+            items: { type: string }
+
+    V2Welcome:
+      name: v2Welcome
+      title: Welcome
+      summary: Sent once per connection immediately after the socket opens.
+      contentType: application/msgpack
+      payload:
+        type: object
+        properties:
+          msg:
+            const: Welcome
+
+    V2Ack:
+      name: v2Ack
+      title: Subscribe/unsubscribe acknowledgement
+      contentType: application/msgpack
+      payload:
+        type: object
+        properties:
+          msg:
+            type: string
+            examples: ['Subscribed to USD', 'Unsubscribed to USD']
+
+    V2Error:
+      name: v2Error
+      title: Error
+      summary: Sent when a subscription request refers to an unsupported currency.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [error]
+        properties:
+          error:
+            type: string
+            examples: ['GBP does not exist.']
+
+    V2Price:
+      name: v2Price
+      title: Price update
+      summary: One key/value pair, currency code → price string.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [price]
+        properties:
+          price:
+            type: object
+            additionalProperties: { type: string }
+            examples: [{ USD: '64211.53' }]
+
+    V2BlockHeight:
+      name: v2BlockHeight
+      title: Block height
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [blockheight]
+        properties:
+          blockheight:
+            type: integer
+            examples: [870123]
+
+    V2BlockFee:
+      name: v2BlockFee
+      title: Rounded median fee (sats/vB)
+      summary: Integer-rounded. Emitted only when the rounded value changes.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [blockfee]
+        properties:
+          blockfee:
+            type: integer
+            examples: [13]
+
+    V2BlockFee2:
+      name: v2BlockFee2
+      title: Precise median fee (sats/vB)
+      summary: Decimal value, rounded to 2 dp. Emitted on every upstream fee tick.
+      contentType: application/msgpack
+      payload:
+        type: object
+        required: [blockfee2]
+        properties:
+          blockfee2:
+            type: number
+            examples: [12.75]
