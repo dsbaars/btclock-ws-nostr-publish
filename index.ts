@@ -10,10 +10,15 @@ import { DataConfig } from './server/config.js'
 import mainLogger from './server/logger.js'
 import { createServer } from './server/app.js'
 import { bootstrapMempool, initMempoolWs } from './server/mempool.js'
+import { createMetrics, createMetricsServer, setMetricsSink } from './server/metrics.js'
 // import { NostrPublisher } from "./server/publisher/nostr.js";
 
 const logger = mainLogger.child({ module: 'fastify' })
+const metricsLogger = mainLogger.child({ module: 'metrics' })
 const mempoolHostname = process.env.MEMPOOL_INSTANCE ?? ''
+
+const metricsBundle = createMetrics()
+setMetricsSink(metricsBundle.sink)
 
 const emitter = new EventEmitter()
 
@@ -80,4 +85,15 @@ server.listen({ host: '::', port: 8080 }, (err, address) => {
         process.exit(1)
     }
     logger.info(`Server listening at ${address}`)
+})
+
+// Prometheus sidecar — separate port so scraping doesn't share the app socket.
+const metricsPort = Number(process.env.METRICS_PORT ?? 9090)
+const metricsServer = await createMetricsServer(metricsBundle, metricsLogger)
+metricsServer.listen({ host: '::', port: metricsPort }, (err, address) => {
+    if (err) {
+        metricsLogger.error({ err: err.message }, 'metrics sidecar failed to start')
+        return
+    }
+    metricsLogger.info(`Metrics sidecar listening at ${address}`)
 })
