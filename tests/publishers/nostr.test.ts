@@ -94,6 +94,21 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
             ])
         })
 
+        it('publishPrice accepts a numeric price (runtime coercion to string)', async () => {
+            delete process.env.PUBLISH_TO_NOSTR
+            const pub = new NostrPublisher()
+            const captured: unknown[] = []
+            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
+                .publishSlot = async (...args: unknown[]) => {
+                    captured.push(args)
+                    return true
+                }
+            // Simulates own-price-source.ts:100 which emits price as a number
+            // despite PriceUpdate.price being typed string.
+            await pub.publishPrice('USD', 64321.5 as unknown as string, 'aggregator')
+            expect(captured[0]).toEqual(['price:USD', 64321.5, 'aggregator', []])
+        })
+
         it('publishPrice omits context tags when not supplied', async () => {
             const pub = new NostrPublisher()
             const captured: unknown[] = []

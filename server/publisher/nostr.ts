@@ -105,7 +105,7 @@ export class NostrPublisher {
      */
     async publishSlot(
         dTag: SlotDTag,
-        content: string,
+        content: string | number,
         source: string,
         extraTags: string[][] = []
     ): Promise<boolean> {
@@ -119,9 +119,14 @@ export class NostrPublisher {
             return false
         }
 
+        // Runtime check: upstream price sources currently type `price` as
+        // string but emit numbers (own-price-source.ts). Coerce defensively
+        // so NDK's signer (which calls .replace on content) cannot blow up.
+        const contentStr = typeof content === 'string' ? content : String(content)
+
         const event = new NDKEvent(this.ndk)
         event.kind = BTCLOCK_EVENT_KIND
-        event.content = content
+        event.content = contentStr
         event.tags = buildSlotTags(dTag, source, extraTags)
         event.created_at = Math.floor(Date.now() / 1000)
 
@@ -135,7 +140,7 @@ export class NostrPublisher {
                     dTag,
                     eventId: event.id,
                     relaysWritten: publishedTo.size,
-                    content: content.length > 40 ? `${content.slice(0, 40)}…` : content,
+                    content: contentStr.length > 40 ? `${contentStr.slice(0, 40)}…` : contentStr,
                 },
                 ok ? 'published' : 'published to zero relays'
             )
@@ -152,7 +157,7 @@ export class NostrPublisher {
 
     publishPrice(
         currency: string,
-        price: string,
+        price: string | number,
         source: string,
         context: PriceContext = {}
     ): Promise<boolean> {
