@@ -14,8 +14,8 @@ const termEl = useTemplateRef<HTMLDivElement>('termEl')
 
 const term = new Terminal({
     disableStdin: true,
-    scrollback: 10,
-    rows: 10,
+    scrollback: 100,
+    rows: 14,
     cols: 200,
     fontFamily: '"Ubuntu Mono", courier-new, courier, monospace, "Powerline Extra Symbols"',
 })
@@ -37,7 +37,14 @@ onMounted(() => {
         return
     }
 
-    term.writeln(` < Listening to \x1b[33m${nip19.npubEncode(pubkey)}\x1b[0m`)
+    const npub = nip19.npubEncode(pubkey)
+    term.writeln(` < relay   \x1b[36m${relays[0]}\x1b[0m`)
+    term.writeln(` < kind    \x1b[36m${BTCLOCK_EVENT_KIND}\x1b[0m  (parameterized-replaceable, NIP-78)`)
+    term.writeln(` < author  \x1b[33m${npub}\x1b[0m`)
+    term.writeln(` < hex     \x1b[90m${pubkey}\x1b[0m`)
+    term.writeln(` < waiting for first event\u2026`)
+
+    let firstEventShown = false
 
     sub = pool.subscribeMany(
         relays,
@@ -47,6 +54,11 @@ onMounted(() => {
                 const dTag = event.tags.find((v) => v[0] === 'd')?.[1]
                 if (!dTag) return
                 if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
+
+                if (!firstEventShown) {
+                    firstEventShown = true
+                    term.writeln(' < \x1b[32msubscription live\x1b[0m')
+                }
 
                 const payload: Record<string, unknown> = {
                     slot: dTag,
@@ -60,7 +72,9 @@ onMounted(() => {
                 term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
             },
             oneose() {
-                console.log('EOSE')
+                if (!firstEventShown) {
+                    term.writeln(' < end of stored events, listening for live updates\u2026')
+                }
             },
         }
     )
