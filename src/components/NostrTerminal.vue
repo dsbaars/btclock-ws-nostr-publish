@@ -50,38 +50,42 @@ onMounted(() => {
 
     let firstEventShown = false
 
-    sub = pool.subscribeMany(
-        relays,
-        [{ kinds: [BTCLOCK_EVENT_KIND], authors: [pubkey] }],
-        {
-            onevent(event) {
-                const dTag = event.tags.find((v) => v[0] === 'd')?.[1]
-                if (!dTag) return
-                if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
+    // nostr-tools v2.23 subscribeMany takes a single Filter, NOT an array.
+    // Passing `[{...}]` produces a malformed REQ and the relay responds with
+    // EOSE and zero events.
+    const filter = { kinds: [BTCLOCK_EVENT_KIND], authors: [pubkey] }
 
-                if (!firstEventShown) {
-                    firstEventShown = true
-                    term.writeln(' < \x1b[32msubscription live\x1b[0m')
-                }
+    sub = pool.subscribeMany(relays, filter, {
+        onevent(event) {
+            const dTag = event.tags.find((v) => v[0] === 'd')?.[1]
+            if (!dTag) return
+            if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
 
-                const payload: Record<string, unknown> = {
-                    slot: dTag,
-                    content: event.content,
-                }
-                if (dTag.startsWith('price:')) {
-                    payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
-                    payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
-                }
-                const ts = new Date(event.created_at * 1000).toLocaleTimeString()
-                term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
-            },
-            oneose() {
-                if (!firstEventShown) {
-                    term.writeln(' < end of stored events, listening for live updates\u2026')
-                }
-            },
-        }
-    )
+            if (!firstEventShown) {
+                firstEventShown = true
+                term.writeln(' < \x1b[32msubscription live\x1b[0m')
+            }
+
+            const payload: Record<string, unknown> = {
+                slot: dTag,
+                content: event.content,
+            }
+            if (dTag.startsWith('price:')) {
+                payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
+                payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
+            }
+            const ts = new Date(event.created_at * 1000).toLocaleTimeString()
+            term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
+        },
+        oneose() {
+            if (!firstEventShown) {
+                term.writeln(' < end of stored events, listening for live updates\u2026')
+            }
+        },
+        onclose(reasons) {
+            term.writeln(` < \x1b[31msubscription closed\x1b[0m: ${reasons.join(' | ')}`)
+        },
+    })
 })
 
 onBeforeUnmount(() => {
