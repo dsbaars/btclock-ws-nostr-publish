@@ -74,7 +74,10 @@ function wireV1() {
                 maybeCelebrateBlock(data.block.height)
                 blockHeight.value = data.block.height
             } else if (data.bitcoin) {
-                currentPrice.value = data.bitcoin
+                // Wire carries price as a string (DataStorage.lastPrice is
+                // map[string]string on the server). BTClock's WASM helpers
+                // expect a number — coerce at the boundary.
+                currentPrice.value = Number(data.bitcoin)
             }
         }
 
@@ -110,7 +113,8 @@ function wireV2() {
 
         if (data.price) {
             const currency = Object.keys(data.price)[0]
-            currentPriceOther[currency] = data.price[currency]
+            // v2 price frames carry the price as a string; see wire note on v1 above.
+            currentPriceOther[currency] = Number(data.price[currency])
         }
         if (data.blockfee2) feeRate.value = data.blockfee2
     })
