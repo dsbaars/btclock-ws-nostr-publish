@@ -3,16 +3,23 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import { SimplePool, nip19 } from 'nostr-tools'
-import { colorizeJson, timestamp } from '../terminal-log'
+import { colorizeJson } from '../terminal-log'
 
-const relays = ['wss://nostr.dbtc.link']
+/** Must match server/publisher/nostr.ts BTCLOCK_EVENT_KIND. */
+const BTCLOCK_EVENT_KIND = 30078
+
+/** Injected at build time via vite-plugin-environment; see vite.config.ts. */
+const relays = (process.env.NOSTR_RELAYS ?? 'wss://relay.primal.net')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
 const pool = new SimplePool()
 const termEl = useTemplateRef<HTMLDivElement>('termEl')
 
 const term = new Terminal({
     disableStdin: true,
-    scrollback: 10,
-    rows: 10,
+    scrollback: 100,
+    rows: 14,
     cols: 200,
     fontFamily: '"Ubuntu Mono", courier-new, courier, monospace, "Powerline Extra Symbols"',
 })
@@ -34,16 +41,38 @@ onMounted(() => {
         return
     }
 
-    term.writeln(` < Listening to \x1b[33m${nip19.npubEncode(pubkey)}\x1b[0m`)
+    const npub = nip19.npubEncode(pubkey)
+    term.writeln(` < relays  \x1b[36m${relays.join(', ')}\x1b[0m`)
+    term.writeln(
+        ` < kind    \x1b[36m${BTCLOCK_EVENT_KIND}\x1b[0m  (parameterized-replaceable, NIP-78)`
+    )
+    term.writeln(` < author  \x1b[33m${npub}\x1b[0m`)
+    term.writeln(` < hex     \x1b[90m${pubkey}\x1b[0m`)
+    term.writeln(` < waiting for first event\u2026`)
 
-    sub = pool.subscribeMany(relays, [{ kinds: [12203], authors: [pubkey] }], {
+    let firstEventShown = false
+
+    // nostr-tools v2.23 subscribeMany takes a single Filter, NOT an array.
+    // Passing `[{...}]` produces a malformed REQ and the relay responds with
+    // EOSE and zero events.
+    const filter = { kinds: [BTCLOCK_EVENT_KIND], authors: [pubkey] }
+
+    sub = pool.subscribeMany(relays, filter, {
         onevent(event) {
-            const msgType = event.tags.find((v) => v[0] === 'type')?.[1]
-            if (!msgType) return
+            const dTag = event.tags.find((v) => v[0] === 'd')?.[1]
+            if (!dTag) return
             if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
 
-            const payload: Record<string, unknown> = { type: msgType, content: event.content }
-            if (msgType === 'priceUsd') {
+            if (!firstEventShown) {
+                firstEventShown = true
+                term.writeln(' < \x1b[32msubscription live\x1b[0m')
+            }
+
+            const payload: Record<string, unknown> = {
+                slot: dTag,
+                content: event.content,
+            }
+            if (dTag.startsWith('price:')) {
                 payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
                 payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
             }
@@ -51,7 +80,12 @@ onMounted(() => {
             term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
         },
         oneose() {
-            console.log('EOSE')
+            if (!firstEventShown) {
+                term.writeln(' < end of stored events, listening for live updates\u2026')
+            }
+        },
+        onclose(reasons) {
+            term.writeln(` < \x1b[31msubscription closed\x1b[0m: ${reasons.join(' | ')}`)
         },
     })
 })

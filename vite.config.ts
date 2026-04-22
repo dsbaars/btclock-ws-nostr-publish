@@ -31,7 +31,10 @@ export default defineConfig(({ command, mode }) => {
                     },
                 ],
             }),
-            EnvironmentPlugin({ NOSTR_PUB: env.NOSTR_PUB ?? '' }),
+            EnvironmentPlugin({
+                NOSTR_PUB: env.NOSTR_PUB ?? '',
+                NOSTR_RELAYS: env.NOSTR_RELAYS ?? '',
+            }),
         ],
         root,
         // define: {

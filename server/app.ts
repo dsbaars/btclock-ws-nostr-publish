@@ -11,6 +11,7 @@ import { Ws1Publisher } from './publisher/ws1.js'
 import { Ws2Publisher } from './publisher/ws2.js'
 import { WsPriceSource } from './price-sources/ws-price-source.js'
 import { OwnPriceSource } from './price-sources/own-price-source.js'
+import { classifyUa, metrics } from './metrics.js'
 
 export type CreateServerDeps = {
     ws1Publisher: Ws1Publisher
@@ -21,10 +22,27 @@ export type CreateServerDeps = {
     devMode?: boolean
 }
 
+/**
+ * permessage-deflate wire config (§2.5). Env-gated via `WS_COMPRESS`
+ * (default: enabled). Small threshold skips compression for tiny control
+ * frames; `level: 3` keeps CPU cost low on Pi.
+ */
+function perMessageDeflateOption(): false | Record<string, unknown> {
+    if (process.env.WS_COMPRESS === 'false') return false
+    return {
+        threshold: 64,
+        zlibDeflateOptions: { level: 3 },
+    }
+}
+
 export async function createServer(deps: CreateServerDeps): Promise<FastifyInstance> {
     const server = fastify()
 
-    await server.register(websocket)
+    await server.register(websocket, {
+        options: {
+            perMessageDeflate: perMessageDeflateOption(),
+        },
+    })
 
     const isProduction = process.env.NODE_ENV === 'production'
 
@@ -112,15 +130,20 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
         reply.type('application/json').send(Array.from(DataStorage.lastPrice.keys()))
     })
 
-    server.get('/ws', { websocket: true }, (socket, req) => {
+    const wireV1 = (socket: import('ws').WebSocket, req: import('fastify').FastifyRequest) => {
+        const ua = classifyUa(req.headers['user-agent'])
+        metrics.onConnect('v1', ua)
+        socket.once('close', () => metrics.onDisconnect('v1', 'client_close'))
         deps.ws1Publisher.newClient(socket)
-    })
+    }
 
-    server.get('/api/v1/ws', { websocket: true }, (socket, req) => {
-        deps.ws1Publisher.newClient(socket)
-    })
+    server.get('/ws', { websocket: true }, wireV1)
+    server.get('/api/v1/ws', { websocket: true }, wireV1)
 
     server.get('/api/v2/ws', { websocket: true }, (socket, req) => {
+        const ua = classifyUa(req.headers['user-agent'])
+        metrics.onConnect('v2', ua)
+        socket.once('close', () => metrics.onDisconnect('v2', 'client_close'))
         deps.ws2Publisher.newClient(socket)
     })
 

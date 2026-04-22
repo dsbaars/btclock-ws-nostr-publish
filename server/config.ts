@@ -7,23 +7,17 @@ import { KrakenPriceSource } from './price-sources/kraken-ws'
 import { WsPriceSource } from './price-sources/ws-price-source'
 import { Data } from 'ws'
 
+/**
+ * Relay list for the Nostr publisher. Override at runtime with
+ * `NOSTR_RELAYS=wss://a,wss://b` (comma-separated). Default is a single
+ * well-maintained public relay that accepts kind 30078 writes.
+ */
+const DEFAULT_NOSTR_RELAYS = ['wss://relay.primal.net']
+
 const NostrConfig = {
-    relayUrls: [
-        'wss://nostr.dbtc.link',
-        // "wss://nostr1.daedaluslabs.io",
-        // "wss://nostr2.daedaluslabs.io",
-        // "wss://nostr3.daedaluslabs.io",
-        'wss://pablof7z.nostr1.com',
-        'wss://offchain.pub',
-        'wss://relay.f7z.io',
-        'wss://relay.damus.io',
-        'wss://relay.snort.social',
-        'wss://offchain.pub/',
-        'wss://nostr.mom',
-        'wss://nostr-pub.wellorder.net',
-        'wss://purplepag.es',
-        'wss://brb.io/',
-    ],
+    relayUrls: (process.env.NOSTR_RELAYS?.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) ?? DEFAULT_NOSTR_RELAYS) as string[],
 }
 
 const krakenMultiCurrency = new KrakenPriceSource('BTC/USD')
