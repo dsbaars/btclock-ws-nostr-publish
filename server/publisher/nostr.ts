@@ -1,211 +1,143 @@
-import WebSocket from 'ws'
 import NDK, {
     NDKEvent,
-    NDKFilter,
     NDKPrivateKeySigner,
     NDKPublishError,
     NDKRelaySet,
 } from '@nostr-dev-kit/ndk'
 import mainLogger from '../logger'
 import { NostrConfig } from '../config'
-import * as dotenv from 'dotenv'
-import { getPublicKey } from 'nostr-tools'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils' // already an installed dependency
-
-dotenv.config()
+import { metrics } from '../metrics'
 
 const logger = mainLogger.child({ module: 'nostr' })
 
-const keySigner = new NDKPrivateKeySigner(process.env.NOSTR_PRIV)
+/**
+ * Parameterized-replaceable event kind (NIP-01 range 30000–39999). We reuse
+ * NIP-78 "application-specific data" (30078) so off-the-shelf Nostr clients
+ * and relays treat each (pubkey, kind, d-tag) tuple as a single addressable
+ * slot — the relay automatically drops older versions.
+ */
+export const BTCLOCK_EVENT_KIND = 30078
 
-const publishToNostr: boolean = process.env.PUBLISH_TO_NOSTR === 'true' ? true : false || false
+export type SlotDTag = `price:${string}` | 'blockheight' | 'medianFee'
+
+export interface PriceContext {
+    block?: number
+    medianFee?: number
+}
+
+/**
+ * Build the tags array for a slot publish. Pure, side-effect free — exported
+ * for unit testing without spinning up NDK.
+ */
+export function buildSlotTags(
+    dTag: SlotDTag,
+    source: string,
+    extraTags: string[][] = []
+): string[][] {
+    return [['d', dTag], ['source', source], ...extraTags]
+}
 
 export class NostrPublisher {
     protected ndk: NDK
     protected relaySet: NDKRelaySet
+    protected publishEnabled: boolean
 
     constructor() {
-        logger.info(`Publish to nostr ${publishToNostr}`)
+        this.publishEnabled = process.env.PUBLISH_TO_NOSTR === 'true'
+        logger.info({ enabled: this.publishEnabled }, 'Nostr publisher constructed')
+
+        const signer = process.env.NOSTR_PRIV
+            ? new NDKPrivateKeySigner(process.env.NOSTR_PRIV)
+            : undefined
 
         this.ndk = new NDK({
-            explicitRelayUrls: [
-                'wss://nostr.dbtc.link',
-                // "wss://nostr1.daedaluslabs.io",
-                // "wss://nostr2.daedaluslabs.io",
-                // "wss://nostr3.daedaluslabs.io",
-                // "wss://pablof7z.nostr1.com",
-                // "wss://offchain.pub",
-                // "wss://relay.f7z.io",
-                // "wss://relay.damus.io",
-                // "wss://relay.snort.social",
-                // "wss://offchain.pub/",
-                // "wss://nostr.mom",
-                // "wss://nostr-pub.wellorder.net",
-                // "wss://purplepag.es",
-                // "wss://brb.io/",
-            ],
-            signer: keySigner,
+            explicitRelayUrls: NostrConfig.relayUrls,
+            signer,
             enableOutboxModel: false,
             autoConnectUserRelays: false,
             clientName: 'BTClock',
         })
 
-        this.relaySet = NDKRelaySet.fromRelayUrls(
-            [
-                'wss://nostr.dbtc.link',
-                // "wss://nostr1.daedaluslabs.io",
-                // "wss://nostr2.daedaluslabs.io",
-                // "wss://nostr3.daedaluslabs.io",
-            ],
-            this.ndk,
-            true
-        )
-
-        this.ndk.pool?.on('relay:connecting', (relay) => {
-            logger.info(`Connecting to relay ${relay.url}`)
-        })
+        this.relaySet = NDKRelaySet.fromRelayUrls(NostrConfig.relayUrls, this.ndk, true)
 
         this.ndk.pool?.on('relay:connect', (relay) => {
-            logger.info(`Connected to relay ${relay.url}`)
+            logger.info({ url: relay.url }, 'relay connected')
         })
-
         this.ndk.pool?.on('relay:disconnect', (relay) => {
-            logger.info(`Disconnected relay ${relay.url}`)
+            logger.info({ url: relay.url }, 'relay disconnected')
         })
-
-        this.ndk.on('event:publish-failed', this.handlePublishingFailures)
-    }
-
-    handlePublishingFailures(event: NDKEvent, error: NDKPublishError) {
-        logger.error(`Event ${event.id} failed to publish`, {
-            publishedToRelays: error.publishedToRelays,
+        this.ndk.on('event:publish-failed', (event, error: NDKPublishError) => {
+            logger.error(
+                { eventId: event.id, publishedToRelays: error.publishedToRelays },
+                'event publish failed'
+            )
         })
     }
 
-    async connect() {
-        if (publishToNostr) {
-            this.ndk.connect().then(async () => {
-                const filter: NDKFilter = {
-                    kinds: [1, 5],
-                    authors: ['642317135fd4c4205323b9dea8af3270657e62d51dc31a657c0ec8aab31c6288'],
-                }
-
-                let lastEventId: string = ''
-
-                const subscription = await this.ndk.subscribe(filter, {}, this.relaySet)
-                subscription.on('event', async (e) => {
-                    if (e.kind == 1) {
-                        if (lastEventId.length && e.tags[1][1] == 'priceUsd') {
-                            const ndkEvent = new NDKEvent(this.ndk)
-                            const currentDate = Date.now()
-
-                            ndkEvent.kind = 5
-                            ndkEvent.created_at = Math.floor(currentDate / 1000)
-                            ndkEvent.content = ''
-                            ndkEvent.tags = [['e', lastEventId]]
-
-                            lastEventId = ''
-                            if (publishToNostr) {
-                                await ndkEvent.publish()
-                            } else {
-                                logger.debug(
-                                    'Nostr publishing disabled, not publishing delete event'
-                                )
-                            }
-                        }
-
-                        lastEventId = e.id
-                    }
-                    if (e.kind == 5) {
-                    }
-                })
-            })
-        }
+    async connect(): Promise<void> {
+        if (!this.publishEnabled) return
+        await this.ndk.connect()
     }
 
-    private hasRelays() {
-        return this.ndk.pool.connectedRelays().length
+    private hasRelays(): boolean {
+        return (this.ndk.pool?.connectedRelays().length ?? 0) > 0
     }
 
-    async nostrPublishPriceEvent(
-        price: number,
-        type: string,
+    /**
+     * Publish a slot as a parameterized-replaceable event. The relay
+     * automatically retires any older event with the same (pubkey, kind,
+     * d-tag) so callers never need a kind-5 delete dance.
+     */
+    async publishSlot(
+        dTag: SlotDTag,
+        content: string,
         source: string,
-        extraTags: any[] = []
-    ): Promise<number | false> {
+        extraTags: string[][] = []
+    ): Promise<boolean> {
+        if (!this.publishEnabled) {
+            logger.debug({ dTag }, 'publish disabled')
+            return false
+        }
         if (!this.hasRelays()) return false
 
-        const expire = new Date()
-        expire.setMinutes(expire.getMinutes() + 1)
-        const ndkEvent = new NDKEvent(this.ndk)
-        ndkEvent.kind = 1
-        ndkEvent.content = price.toString()
-        ndkEvent.tags = [
-            ['expiration', String(Math.floor(expire.getTime() / 1000))],
-            ['type', 'priceUsd'],
-            ['source', source],
-            ...extraTags,
-        ]
+        const event = new NDKEvent(this.ndk)
+        event.kind = BTCLOCK_EVENT_KIND
+        event.content = content
+        event.tags = buildSlotTags(dTag, source, extraTags)
+        event.created_at = Math.floor(Date.now() / 1000)
 
-        await ndkEvent.sign()
-
-        if (publishToNostr) {
-            try {
-                await ndkEvent
-                    .publish()
-                    .then((e) => {
-                        return Date.now() / 1000
-                    })
-                    .catch((e) => {
-                        logger.error('Error publishing price')
-                    })
-            } catch (e: unknown) {
-                if (e instanceof NDKPublishError) {
-                    logger.error(e)
-                }
-            }
-            return Date.now() / 1000
-        } else {
-            logger.debug('Nostr publishing disabled, not publishing price update')
+        try {
+            await event.sign()
+            await event.publish()
+            metrics.onNostrPublish(dTag, true)
+            return true
+        } catch (e) {
+            metrics.onNostrPublish(dTag, false)
+            logger.error(
+                { err: e instanceof Error ? e.message : String(e), dTag },
+                'publish failed'
+            )
+            return false
         }
-        return false
     }
 
-    async nostrPublishBlockEvent(blockHeight: number, source: string) {
-        if (!this.hasRelays()) return false
+    publishPrice(
+        currency: string,
+        price: string,
+        source: string,
+        context: PriceContext = {}
+    ): Promise<boolean> {
+        const extra: string[][] = []
+        if (context.block !== undefined) extra.push(['block', String(context.block)])
+        if (context.medianFee !== undefined) extra.push(['medianFee', String(context.medianFee)])
+        return this.publishSlot(`price:${currency}`, price, source, extra)
+    }
 
-        const currentDate = Date.now()
-        const expire = new Date(currentDate)
-        expire.setMinutes(expire.getMinutes() + 240)
+    publishBlockHeight(height: number, source: string): Promise<boolean> {
+        return this.publishSlot('blockheight', String(height), source)
+    }
 
-        const ndkEvent = new NDKEvent(this.ndk)
-
-        ndkEvent.kind = 1
-        ndkEvent.created_at = Math.floor(currentDate / 1000)
-        ndkEvent.tags = [
-            ['expiration', String(Math.floor(expire.getTime() / 1000))],
-            ['type', 'blockHeight'],
-            ['source', 'mempoolWS'],
-        ]
-        ndkEvent.content = String(blockHeight)
-
-        if (publishToNostr) {
-            try {
-                await ndkEvent
-                    .publish()
-                    .then((e) => {
-                        return Date.now() / 1000
-                    })
-                    .catch((e) => {
-                        logger.error('Error publishing block')
-                    })
-            } catch (e: unknown) {
-                if (e instanceof NDKPublishError) {
-                    logger.error(e)
-                }
-            }
-        } else {
-            logger.debug('Nostr publishing disabled, not publishing block update')
-        }
+    publishMedianFee(fee: number, source: string): Promise<boolean> {
+        return this.publishSlot('medianFee', String(fee), source)
     }
 }

@@ -3,7 +3,10 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import { SimplePool, nip19 } from 'nostr-tools'
-import { colorizeJson, timestamp } from '../terminal-log'
+import { colorizeJson } from '../terminal-log'
+
+/** Must match server/publisher/nostr.ts BTCLOCK_EVENT_KIND. */
+const BTCLOCK_EVENT_KIND = 30078
 
 const relays = ['wss://nostr.dbtc.link']
 const pool = new SimplePool()
@@ -36,24 +39,31 @@ onMounted(() => {
 
     term.writeln(` < Listening to \x1b[33m${nip19.npubEncode(pubkey)}\x1b[0m`)
 
-    sub = pool.subscribeMany(relays, [{ kinds: [12203], authors: [pubkey] }], {
-        onevent(event) {
-            const msgType = event.tags.find((v) => v[0] === 'type')?.[1]
-            if (!msgType) return
-            if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
+    sub = pool.subscribeMany(
+        relays,
+        [{ kinds: [BTCLOCK_EVENT_KIND], authors: [pubkey] }],
+        {
+            onevent(event) {
+                const dTag = event.tags.find((v) => v[0] === 'd')?.[1]
+                if (!dTag) return
+                if (Date.now() - event.created_at * 1000 > FIVE_MINUTES_MS) return
 
-            const payload: Record<string, unknown> = { type: msgType, content: event.content }
-            if (msgType === 'priceUsd') {
-                payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
-                payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
-            }
-            const ts = new Date(event.created_at * 1000).toLocaleTimeString()
-            term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
-        },
-        oneose() {
-            console.log('EOSE')
-        },
-    })
+                const payload: Record<string, unknown> = {
+                    slot: dTag,
+                    content: event.content,
+                }
+                if (dTag.startsWith('price:')) {
+                    payload.block = event.tags.find((v) => v[0] === 'block')?.[1]
+                    payload.fee = event.tags.find((v) => v[0] === 'medianFee')?.[1]
+                }
+                const ts = new Date(event.created_at * 1000).toLocaleTimeString()
+                term.writeln(` > \x1b[32m${ts}\x1b[0m ${colorizeJson(payload)}`)
+            },
+            oneose() {
+                console.log('EOSE')
+            },
+        }
+    )
 })
 
 onBeforeUnmount(() => {
