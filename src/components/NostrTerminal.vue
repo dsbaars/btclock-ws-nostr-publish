@@ -8,7 +8,11 @@ import { colorizeJson } from '../terminal-log'
 /** Must match server/publisher/nostr.ts BTCLOCK_EVENT_KIND. */
 const BTCLOCK_EVENT_KIND = 30078
 
-const relays = ['wss://nostr.dbtc.link']
+/** Injected at build time via vite-plugin-environment; see vite.config.ts. */
+const relays = (process.env.NOSTR_RELAYS ?? 'wss://relay.primal.net')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
 const pool = new SimplePool()
 const termEl = useTemplateRef<HTMLDivElement>('termEl')
 
@@ -38,7 +42,7 @@ onMounted(() => {
     }
 
     const npub = nip19.npubEncode(pubkey)
-    term.writeln(` < relay   \x1b[36m${relays[0]}\x1b[0m`)
+    term.writeln(` < relays  \x1b[36m${relays.join(', ')}\x1b[0m`)
     term.writeln(` < kind    \x1b[36m${BTCLOCK_EVENT_KIND}\x1b[0m  (parameterized-replaceable, NIP-78)`)
     term.writeln(` < author  \x1b[33m${npub}\x1b[0m`)
     term.writeln(` < hex     \x1b[90m${pubkey}\x1b[0m`)
