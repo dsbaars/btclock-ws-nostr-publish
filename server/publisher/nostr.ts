@@ -44,7 +44,18 @@ export class NostrPublisher {
 
     constructor() {
         this.publishEnabled = process.env.PUBLISH_TO_NOSTR === 'true'
-        logger.info({ enabled: this.publishEnabled }, 'Nostr publisher constructed')
+        const hasKey = Boolean(process.env.NOSTR_PRIV)
+        logger.info(
+            {
+                enabled: this.publishEnabled,
+                hasKey,
+                relays: NostrConfig.relayUrls,
+            },
+            'Nostr publisher constructed'
+        )
+        if (this.publishEnabled && !hasKey) {
+            logger.warn('PUBLISH_TO_NOSTR=true but NOSTR_PRIV is not set — publishes will fail')
+        }
 
         const signer = process.env.NOSTR_PRIV
             ? new NDKPrivateKeySigner(process.env.NOSTR_PRIV)
@@ -75,7 +86,11 @@ export class NostrPublisher {
     }
 
     async connect(): Promise<void> {
-        if (!this.publishEnabled) return
+        if (!this.publishEnabled) {
+            logger.info('publisher disabled (PUBLISH_TO_NOSTR != "true") — skipping connect')
+            return
+        }
+        logger.info({ relays: NostrConfig.relayUrls }, 'connecting to relays')
         await this.ndk.connect()
     }
 
@@ -98,7 +113,11 @@ export class NostrPublisher {
             logger.debug({ dTag }, 'publish disabled')
             return false
         }
-        if (!this.hasRelays()) return false
+        if (!this.hasRelays()) {
+            logger.warn({ dTag }, 'no relays connected — dropping publish')
+            metrics.onNostrPublish(dTag, false)
+            return false
+        }
 
         const event = new NDKEvent(this.ndk)
         event.kind = BTCLOCK_EVENT_KIND
@@ -108,9 +127,19 @@ export class NostrPublisher {
 
         try {
             await event.sign()
-            await event.publish()
-            metrics.onNostrPublish(dTag, true)
-            return true
+            const publishedTo = await event.publish()
+            const ok = publishedTo.size > 0
+            metrics.onNostrPublish(dTag, ok)
+            logger.info(
+                {
+                    dTag,
+                    eventId: event.id,
+                    relaysWritten: publishedTo.size,
+                    content: content.length > 40 ? `${content.slice(0, 40)}…` : content,
+                },
+                ok ? 'published' : 'published to zero relays'
+            )
+            return ok
         } catch (e) {
             metrics.onNostrPublish(dTag, false)
             logger.error(

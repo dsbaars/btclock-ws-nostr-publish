@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import EventEmitter from 'node:events'
 import { exit } from 'process'
 
