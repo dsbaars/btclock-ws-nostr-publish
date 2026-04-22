@@ -20,6 +20,12 @@ export type CreateServerDeps = {
     logger: pino.Logger
     publicDir?: string
     devMode?: boolean
+    /**
+     * Emitter used by the synthetic /api/_inject endpoint to drive the
+     * publisher path without real upstream traffic. Only consulted when
+     * `process.env.ENABLE_INJECT` is truthy. Benchmark-only.
+     */
+    injectEmitter?: NodeJS.EventEmitter
 }
 
 /**
@@ -129,6 +135,44 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
     server.get('/api/v2/currencies', async (request, reply) => {
         reply.type('application/json').send(Array.from(DataStorage.lastPrice.keys()))
     })
+
+    // Benchmark-only synthetic event injection. Mirrors the Go ws-node
+    // /api/_inject route so the bench harness can drive both servers
+    // under identical load without relying on real upstream traffic.
+    // Gated by ENABLE_INJECT=true; otherwise the route is not mounted.
+    if (process.env.ENABLE_INJECT === 'true' && deps.injectEmitter) {
+        const emitter = deps.injectEmitter
+        type InjectBody = {
+            event: 'newPrice' | 'newBlock' | 'newFee'
+            pair?: string
+            price?: string
+            block?: number
+            fee?: number
+        }
+        server.post('/api/_inject', async (request, reply) => {
+            const body = request.body as InjectBody
+            switch (body?.event) {
+                case 'newPrice':
+                    if (!body.pair || body.price === undefined) {
+                        return reply.code(400).send({ error: 'pair + price required' })
+                    }
+                    DataStorage.lastPrice.set(body.pair, String(body.price))
+                    emitter.emit('newPrice', { pair: body.pair, price: String(body.price) })
+                    break
+                case 'newBlock':
+                    if (typeof body.block === 'number') DataStorage.lastBlock = body.block
+                    emitter.emit('newBlock')
+                    break
+                case 'newFee':
+                    if (typeof body.fee === 'number') DataStorage.lastMedianFee = body.fee
+                    emitter.emit('newFee')
+                    break
+                default:
+                    return reply.code(400).send({ error: 'unknown event: ' + body?.event })
+            }
+            reply.code(204).send()
+        })
+    }
 
     const wireV1 = (socket: import('ws').WebSocket, req: import('fastify').FastifyRequest) => {
         const ua = classifyUa(req.headers['user-agent'])

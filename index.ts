@@ -82,6 +82,7 @@ const server = await createServer({
     priceSources,
     logger,
     devMode,
+    injectEmitter: emitter,
 })
 
 server.listen({ host: '::', port: 8080 }, (err, address) => {

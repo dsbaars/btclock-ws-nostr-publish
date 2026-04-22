@@ -16,8 +16,12 @@ N=${N:-1000}
 DURATION=${DURATION:-30s}
 WARMUP=${WARMUP:-5s}
 RAMP=${RAMP:-5s}
+# Synthetic injection rate (events/sec). Set INJECT_RATE=0 to fall back
+# to upstream-driven traffic (low fidelity on quiet markets).
+INJECT_RATE=${INJECT_RATE:-50}
 OUT=${OUT:-$REPO/bench-results}
 mkdir -p "$OUT"
+export ENABLE_INJECT=true
 
 WSBENCH="$REPO/go-server/bin/wsbench"
 [[ -x "$WSBENCH" ]] || { echo "build wsbench first: (cd go-server && go build -tags nozmq -o bin/wsbench ./cmd/wsbench)"; exit 1; }
@@ -59,6 +63,11 @@ run_bench() {
     local watcher_pid=$!
 
     # Run the bench.
+    local injectArgs=()
+    if [[ "$INJECT_RATE" != "0" ]]; then
+        injectArgs=(-inject-url "http://localhost:8080/api/_inject" -inject-rate "$INJECT_RATE")
+    fi
+
     "$WSBENCH" \
         -url "ws://localhost:8080/api/v2/ws" \
         -label "$label" \
@@ -66,6 +75,7 @@ run_bench() {
         -warmup "$WARMUP" \
         -duration "$DURATION" \
         -ramp "$RAMP" \
+        "${injectArgs[@]}" \
         -json | tee "$OUT/$label.wsbench.json" | jq -r '
             "=== " + .label + " ===",
             "  connected        \(.clients_connected)/\(.clients)  (failed \(.clients_failed))",
@@ -73,6 +83,7 @@ run_bench() {
             "  first-frame ms   p50=\(.first_frame_ms.p50 // 0)  p95=\(.first_frame_ms.p95 // 0)  p99=\(.first_frame_ms.p99 // 0)",
             "  frames           \(.aggregate_frames)  (\(.aggregate_frames_per_sec)/s, \(.mean_frames_per_client)/client)",
             "  bytes            \(.aggregate_bytes)  (\(.aggregate_bytes_per_sec / 1024)kB/s)",
+            (if .inject_sent > 0 then "  inject           sent=\(.inject_sent)  failed=\(.inject_failed)  expected=\(.expected_frames)  delivery=\((.delivery_rate*1000|floor)/10)%" else empty end),
             "  errors           \(.errors)"
         '
 
