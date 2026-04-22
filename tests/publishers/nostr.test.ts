@@ -77,11 +77,12 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
             const pub = new NostrPublisher()
             // Spy on publishSlot via method replacement — lightweight.
             const captured: unknown[] = []
-            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
-                .publishSlot = async (...args: unknown[]) => {
-                    captured.push(args)
-                    return true
-                }
+            ;(
+                pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> }
+            ).publishSlot = async (...args: unknown[]) => {
+                captured.push(args)
+                return true
+            }
             await pub.publishPrice('EUR', '59000', 'kraken', { block: 870001, medianFee: 13 })
             expect(captured[0]).toEqual([
                 'price:EUR',
@@ -98,11 +99,12 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
             delete process.env.PUBLISH_TO_NOSTR
             const pub = new NostrPublisher()
             const captured: unknown[] = []
-            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
-                .publishSlot = async (...args: unknown[]) => {
-                    captured.push(args)
-                    return true
-                }
+            ;(
+                pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> }
+            ).publishSlot = async (...args: unknown[]) => {
+                captured.push(args)
+                return true
+            }
             // Simulates own-price-source.ts:100 which emits price as a number
             // despite PriceUpdate.price being typed string.
             await pub.publishPrice('USD', 64321.5 as unknown as string, 'aggregator')
@@ -112,11 +114,12 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
         it('publishPrice omits context tags when not supplied', async () => {
             const pub = new NostrPublisher()
             const captured: unknown[] = []
-            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
-                .publishSlot = async (...args: unknown[]) => {
-                    captured.push(args)
-                    return true
-                }
+            ;(
+                pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> }
+            ).publishSlot = async (...args: unknown[]) => {
+                captured.push(args)
+                return true
+            }
             await pub.publishPrice('USD', '64000', 'coinbase')
             expect(captured[0]).toEqual(['price:USD', '64000', 'coinbase', []])
         })
@@ -124,11 +127,12 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
         it('publishBlockHeight uses blockheight dTag', async () => {
             const pub = new NostrPublisher()
             const captured: unknown[] = []
-            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
-                .publishSlot = async (...args: unknown[]) => {
-                    captured.push(args)
-                    return true
-                }
+            ;(
+                pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> }
+            ).publishSlot = async (...args: unknown[]) => {
+                captured.push(args)
+                return true
+            }
             await pub.publishBlockHeight(870000, 'mempoolWS')
             expect(captured[0]).toEqual(['blockheight', '870000', 'mempoolWS'])
         })
@@ -136,11 +140,12 @@ describe('§3.5 Nostr parameterized-replaceable publisher', () => {
         it('publishMedianFee uses medianFee dTag', async () => {
             const pub = new NostrPublisher()
             const captured: unknown[] = []
-            ;(pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> })
-                .publishSlot = async (...args: unknown[]) => {
-                    captured.push(args)
-                    return true
-                }
+            ;(
+                pub as unknown as { publishSlot: (...args: unknown[]) => Promise<boolean> }
+            ).publishSlot = async (...args: unknown[]) => {
+                captured.push(args)
+                return true
+            }
             await pub.publishMedianFee(12.75, 'mempoolWS')
             expect(captured[0]).toEqual(['medianFee', '12.75', 'mempoolWS'])
         })

@@ -87,10 +87,9 @@ export class NostrPublisher {
 
     async connect(): Promise<void> {
         if (!this.publishEnabled) {
-            logger.info('publisher disabled (PUBLISH_TO_NOSTR != "true") — skipping connect')
+            logger.debug('publisher disabled (PUBLISH_TO_NOSTR != "true") — skipping connect')
             return
         }
-        logger.info({ relays: NostrConfig.relayUrls }, 'connecting to relays')
         await this.ndk.connect()
     }
 
@@ -135,15 +134,14 @@ export class NostrPublisher {
             const publishedTo = await event.publish()
             const ok = publishedTo.size > 0
             metrics.onNostrPublish(dTag, ok)
-            logger.info(
-                {
-                    dTag,
-                    eventId: event.id,
-                    relaysWritten: publishedTo.size,
-                    content: contentStr.length > 40 ? `${contentStr.slice(0, 40)}…` : contentStr,
-                },
-                ok ? 'published' : 'published to zero relays'
-            )
+            if (!ok) {
+                logger.warn({ dTag, eventId: event.id }, 'published to zero relays')
+            } else {
+                logger.debug(
+                    { dTag, eventId: event.id, relaysWritten: publishedTo.size },
+                    'published'
+                )
+            }
             return ok
         } catch (e) {
             metrics.onNostrPublish(dTag, false)

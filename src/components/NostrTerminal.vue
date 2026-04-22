@@ -43,7 +43,9 @@ onMounted(() => {
 
     const npub = nip19.npubEncode(pubkey)
     term.writeln(` < relays  \x1b[36m${relays.join(', ')}\x1b[0m`)
-    term.writeln(` < kind    \x1b[36m${BTCLOCK_EVENT_KIND}\x1b[0m  (parameterized-replaceable, NIP-78)`)
+    term.writeln(
+        ` < kind    \x1b[36m${BTCLOCK_EVENT_KIND}\x1b[0m  (parameterized-replaceable, NIP-78)`
+    )
     term.writeln(` < author  \x1b[33m${npub}\x1b[0m`)
     term.writeln(` < hex     \x1b[90m${pubkey}\x1b[0m`)
     term.writeln(` < waiting for first event\u2026`)

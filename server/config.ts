@@ -15,8 +15,9 @@ import { Data } from 'ws'
 const DEFAULT_NOSTR_RELAYS = ['wss://relay.primal.net']
 
 const NostrConfig = {
-    relayUrls: (process.env.NOSTR_RELAYS?.split(',').map((s) => s.trim()).filter(Boolean) ??
-        DEFAULT_NOSTR_RELAYS) as string[],
+    relayUrls: (process.env.NOSTR_RELAYS?.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) ?? DEFAULT_NOSTR_RELAYS) as string[],
 }
 
 const krakenMultiCurrency = new KrakenPriceSource('BTC/USD')

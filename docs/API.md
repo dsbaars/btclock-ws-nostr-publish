@@ -1,10 +1,11 @@
 # BTClock WS data source — API reference
 
-This server exposes three things:
+This server exposes four things:
 
 - **REST endpoints** under `/api/*` for pulling the latest aggregated BTC price, block height, and median mempool fee.
 - **Legacy WebSocket v1** at `/ws` and `/api/v1/ws`: JSON frames, broadcast to every connected client.
 - **WebSocket v2** at `/api/v2/ws`: MessagePack frames, subscription-based.
+- **Nostr** (opt-in): parameterized-replaceable events (kind 30078) for price / block / fee slots. See [Nostr event format](./NOSTR.md).
 
 Interactive playgrounds and machine-readable specs:
 
