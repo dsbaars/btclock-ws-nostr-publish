@@ -19,8 +19,7 @@ const termEl = useTemplateRef<HTMLDivElement>('termEl')
 const term = new Terminal({
     disableStdin: true,
     scrollback: 100,
-    rows: 14,
-    cols: 200,
+    rows: 10,
     fontFamily: '"Ubuntu Mono", courier-new, courier, monospace, "Powerline Extra Symbols"',
 })
 const fit = new FitAddon()
