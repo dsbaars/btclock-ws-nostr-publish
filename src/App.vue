@@ -225,9 +225,7 @@ onMounted(() => {
             title="Halving Countdown (Date)"
         />
         <BTClockV4
-            :cells="
-                parseSatsPerCurrency(currentPrice, 'USD', { useSatsSymbol: showSatsSymbol })
-            "
+            :cells="parseSatsPerCurrency(currentPrice, 'USD', { useSatsSymbol: showSatsSymbol })"
             title="Sats per Currency"
         />
         <BTClockV4

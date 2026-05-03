@@ -169,8 +169,7 @@ export function parseSatsPerCurrency(
     panels = 7
 ): Cells {
     const sats = satsPerUnit(price)
-    const moscow =
-        opts.useMscwTime !== false && currency === 'USD' && sats > 0 && sats < 100000
+    const moscow = opts.useMscwTime !== false && currency === 'USD' && sats > 0 && sats < 100000
     const out: string[] = [moscow ? 'MSCW/TIME' : `SATS/${currency}`]
 
     const digitSlots = panels >= 1 ? panels - 1 : 0
@@ -212,11 +211,7 @@ export function parseFeeRate(feeSatsVb: number, panels = 7): Cells {
 
 // Halving countdown. Default `asBlocks=true` (label + N digits remaining);
 // `asBlocks=false` emits the years/days/hours/mins breakdown cells.
-export function parseHalving(
-    height: number,
-    opts: { asBlocks?: boolean } = {},
-    panels = 7
-): Cells {
+export function parseHalving(height: number, opts: { asBlocks?: boolean } = {}, panels = 7): Cells {
     const asBlocks = opts.asBlocks !== false
     if (asBlocks) {
         const rem = halvingCountdown(height)
