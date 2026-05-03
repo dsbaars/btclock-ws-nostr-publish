@@ -5,12 +5,20 @@ import { confetti } from '@tsparticles/confetti'
 import { Encoder, Decoder } from '@msgpack/msgpack'
 import 'toastify-js/src/toastify.css'
 
-import BTClock from './components/BTClock.vue'
+import BTClockV4 from './components/BTClockV4.vue'
 import NostrTerminal from './components/NostrTerminal.vue'
 import TerminalPane from './components/TerminalPane.vue'
 import { WsConnection } from './ws_connection'
 import { colorizeJson, timestamp } from './terminal-log'
-import { CURRENCY_AUD, CURRENCY_CAD, CURRENCY_EUR, CURRENCY_GBP, CURRENCY_JPY } from './constants'
+import {
+    parseBlockHeight,
+    parseBitcoinSupply,
+    parseMarketCap,
+    parseBtcPrice,
+    parseSatsPerCurrency,
+    parseFeeRate,
+    parseHalving,
+} from './btclock_v4/panel_texts'
 
 const encoder = new Encoder()
 const decoder = new Decoder()
@@ -33,15 +41,7 @@ const ignoreDataSource = ref<boolean>(false)
 const showOtherCurrencies = ref<boolean>(false)
 const showSatsSymbol = ref<boolean>(false)
 
-const otherCurrencies = [
-    { code: 'EUR', symbol: CURRENCY_EUR },
-    { code: 'GBP', symbol: CURRENCY_GBP },
-    { code: 'JPY', symbol: CURRENCY_JPY },
-    { code: 'AUD', symbol: CURRENCY_AUD },
-    { code: 'CAD', symbol: CURRENCY_CAD },
-] as const
-
-const OTHER_CURRENCY_SUBSCRIPTION = otherCurrencies.map((c) => c.code)
+const otherCurrencies = ['EUR', 'GBP', 'JPY', 'AUD', 'CAD'] as const
 
 const websocketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
 const host = import.meta.env.DEV ? 'localhost:8080' : window.location.host
@@ -75,8 +75,7 @@ function wireV1() {
                 blockHeight.value = data.block.height
             } else if (data.bitcoin) {
                 // Wire carries price as a string (DataStorage.lastPrice is
-                // map[string]string on the server). BTClock's WASM helpers
-                // expect a number — coerce at the boundary.
+                // map[string]string on the server). Coerce at the boundary.
                 currentPrice.value = Number(data.bitcoin)
             }
         }
@@ -113,7 +112,6 @@ function wireV2() {
 
         if (data.price) {
             const currency = Object.keys(data.price)[0]
-            // v2 price frames carry the price as a string; see wire note on v1 above.
             currentPriceOther[currency] = Number(data.price[currency])
         }
         if (data.blockfee2) feeRate.value = data.blockfee2
@@ -123,9 +121,7 @@ function wireV2() {
 
 watch(showOtherCurrencies, (show) => {
     const type = show ? 'subscribe' : 'unsubscribe'
-    socket2.send(
-        encoder.encode({ type, eventType: 'price', currencies: OTHER_CURRENCY_SUBSCRIPTION })
-    )
+    socket2.send(encoder.encode({ type, eventType: 'price', currencies: [...otherCurrencies] }))
 })
 
 onMounted(() => {
@@ -196,98 +192,69 @@ onMounted(() => {
     </div>
 
     <div class="preview-container" v-if="showOtherCurrencies">
-        <template v-for="cur in otherCurrencies" :key="cur.code">
-            <BTClock
-                :data="currentPriceOther[cur.code]"
-                method="parsePriceData"
-                :params="[cur.symbol, false, false, false]"
+        <template v-for="cur in otherCurrencies" :key="cur">
+            <BTClockV4 :cells="parseBtcPrice(currentPriceOther[cur], cur)" />
+            <BTClockV4
+                :cells="
+                    parseSatsPerCurrency(currentPriceOther[cur], cur, {
+                        useSatsSymbol: showSatsSymbol,
+                    })
+                "
             />
-            <BTClock
-                :data="currentPriceOther[cur.code]"
-                method="parseSatsPerCurrency"
-                :params="[cur.symbol, showSatsSymbol, true]"
-            />
-            <BTClock
-                :data="blockHeight"
-                method="parseMarketCap"
-                :params="[currentPriceOther[cur.code], cur.symbol, false]"
-            />
+            <BTClockV4 :cells="parseMarketCap(blockHeight, currentPriceOther[cur], cur)" />
         </template>
     </div>
 
     <div class="preview-container">
-        <BTClock :data="blockHeight" method="parseBlockHeight" title="Block Height" />
-        <BTClock
-            :data="blockHeight"
-            method="parseBitcoinSupply"
-            :params="[true, false]"
-            title="BTC Supply (absolute)"
+        <BTClockV4 :cells="parseBlockHeight(blockHeight)" title="Block Height" />
+        <BTClockV4
+            :cells="parseBitcoinSupply(blockHeight, { bigChars: true })"
+            title="BTC Supply (big chars)"
         />
-        <BTClock
-            :data="blockHeight"
-            method="parseBitcoinSupply"
-            :params="[true, true]"
-            title="BTC Supply (percentage) "
+        <BTClockV4
+            :cells="parseBitcoinSupply(blockHeight, { bigChars: true, showPercent: true })"
+            title="BTC Supply (percentage)"
         />
-        <BTClock :data="feeRate" method="parseBlockFees" title="Fee Rate (rounded)" />
-        <BTClock
-            :data="blockHeight"
-            method="parseHalvingCountdown"
-            :params="[true]"
+        <BTClockV4 :cells="parseFeeRate(feeRate)" title="Fee Rate" />
+        <BTClockV4
+            :cells="parseHalving(blockHeight, { asBlocks: true })"
             title="Halving Countdown (Blocks)"
         />
-        <BTClock
-            :data="blockHeight"
-            method="parseHalvingCountdown"
-            :params="[false]"
+        <BTClockV4
+            :cells="parseHalving(blockHeight, { asBlocks: false })"
             title="Halving Countdown (Date)"
         />
-        <BTClock
-            :data="currentPrice"
-            method="parseSatsPerCurrency"
-            :params="['$', showSatsSymbol, true]"
+        <BTClockV4
+            :cells="
+                parseSatsPerCurrency(currentPrice, 'USD', { useSatsSymbol: showSatsSymbol })
+            "
             title="Sats per Currency"
         />
-        <BTClock
-            :data="blockHeight"
-            method="parseMarketCap"
-            :params="[currentPrice, '$', false]"
+        <BTClockV4
+            :cells="parseMarketCap(blockHeight, currentPrice, 'USD')"
             title="Market Cap (small chars)"
         />
-        <BTClock
-            :data="blockHeight"
-            method="parseMarketCap"
-            :params="[currentPrice, '$', true]"
+        <BTClockV4
+            :cells="parseMarketCap(blockHeight, currentPrice, 'USD', { bigChars: true })"
             title="Market Cap (big chars)"
         />
-        <BTClock
-            :data="currentPrice"
-            method="parsePriceData"
-            :params="['$', true, false, true]"
+        <BTClockV4
+            :cells="parseBtcPrice(currentPrice, 'USD', { suffix: true, shareDot: true })"
             title="Ticker (Suffix notation, compact)"
         />
-        <BTClock
-            :data="currentPrice"
-            method="parsePriceData"
-            :params="['$', true, false, false]"
+        <BTClockV4
+            :cells="parseBtcPrice(currentPrice, 'USD', { suffix: true })"
             title="Ticker (Suffix notation)"
         />
-        <BTClock
-            :data="currentPrice"
-            method="parsePriceData"
-            :params="['$', false, false, false]"
-            title="Ticker (Default)"
-        />
-        <BTClock
-            :data="currentPrice"
-            method="parsePriceData"
-            :params="['$', true, true, true]"
+        <BTClockV4 :cells="parseBtcPrice(currentPrice, 'USD')" title="Ticker (Default)" />
+        <BTClockV4
+            :cells="
+                parseBtcPrice(currentPrice, 'USD', { suffix: true, mowMode: true, shareDot: true })
+            "
             title="Ticker (Mow Suffix notation, compact)"
         />
-        <BTClock
-            :data="currentPrice"
-            method="parsePriceData"
-            :params="['$', true, true, false]"
+        <BTClockV4
+            :cells="parseBtcPrice(currentPrice, 'USD', { suffix: true, mowMode: true })"
             title="Ticker (Mow Suffix notation)"
         />
     </div>
