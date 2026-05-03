@@ -99,7 +99,7 @@ export function formatNumberWithSuffix(num: number, numCharacters = 4, mowMode =
 
     if (num === 0) return mowMode ? '0M' : '0'
 
-    let n = Math.max(0, Math.floor(num))
+    const n = Math.max(0, Math.floor(num))
     let value = n
     const digits = Math.floor(Math.log10(value)) + 1
     let suffix: string
