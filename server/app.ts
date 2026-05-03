@@ -136,10 +136,9 @@ export async function createServer(deps: CreateServerDeps): Promise<FastifyInsta
         reply.type('application/json').send(Array.from(DataStorage.lastPrice.keys()))
     })
 
-    // Benchmark-only synthetic event injection. Mirrors the Go ws-node
-    // /api/_inject route so the bench harness can drive both servers
-    // under identical load without relying on real upstream traffic.
-    // Gated by ENABLE_INJECT=true; otherwise the route is not mounted.
+    // Benchmark-only synthetic event injection. Lets a bench harness drive
+    // the publisher under controlled load without relying on real upstream
+    // traffic. Gated by ENABLE_INJECT=true; otherwise the route is not mounted.
     if (process.env.ENABLE_INJECT === 'true' && deps.injectEmitter) {
         const emitter = deps.injectEmitter
         type InjectBody = {

@@ -1,8 +1,7 @@
 /**
  * In-process broadcast benchmarks for the Node Ws1/Ws2 publishers.
  *
- * Mirrors the Go benchmarks at go-server/tests/bench_test.go so we can
- * compare per-event fan-out cost like-for-like. Each benchmark:
+ * Each benchmark:
  *  1. builds a publisher
  *  2. attaches N FakeSocket clients (subscribed to the event under test)
  *  3. emits one broadcast event per iteration
